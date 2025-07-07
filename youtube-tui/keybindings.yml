@@ -1,0 +1,52 @@
+':':
+  0: StartCommandCapture
+'h':
+  0: MoveLeft
+'j':
+  0: MoveDown
+Backspace:
+  0: Back
+'r':
+  2: Reload
+End:
+  0: ClearHistory
+'u':
+  2: ClearLine
+'w':
+  2: RemoveWord
+'e':
+  2: End
+Left:
+  4: Back
+  2: PreviousWord
+  0: MoveLeft
+'k':
+  0: MoveUp
+'a':
+  2: First
+'v':
+  2: Paste
+'l':
+  0: MoveRight
+'d':
+  4: RemoveWord
+  0: ClearHistory
+F5:
+  0: Reload
+Right:
+  0: MoveRight
+  2: NextWord
+'q':
+  0: Exit
+Down:
+  2: NextEntry
+  0: MoveDown
+Home:
+  0: FirstHistory
+Enter:
+  0: Select
+Esc:
+  0: Deselect
+Up:
+  0: MoveUp
+  2: PreviousEntry
