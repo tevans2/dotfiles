@@ -1,7 +1,7 @@
 ## To Do
 
 - Change python formatting to ruff: faster
-    > tweak confrom config
+    > test tweak confrom config
 - test task
 
 ## Doing
