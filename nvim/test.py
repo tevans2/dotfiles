@@ -1,16 +1,30 @@
 import math
 import random
 
+dictino = {"testy", "trest1", "test2"}
+
 
 def do_stuff(x, y):
-    result = x + y
-    result *= 2
+    this = None
+    if this:
+        if not this:
+            if not this:
+                if not this:
+                    if not this:
+                        result = x + y
+                        result *= 2
+
     return result
 
 
 def calcAreaOfCircle(r):
     area = math.pi * r * r
     return area
+
+
+def this_is_a_func(test: str):
+    print("fun")
+    pass
 
 
 class person:
