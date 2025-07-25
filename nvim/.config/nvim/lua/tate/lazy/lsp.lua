@@ -57,7 +57,8 @@ return {
 			ensure_installed = {
 				"lua_ls",
                 "pyright",
-                "ruff"
+                "ruff",
+                "clangd"
 			},
 			handlers = {
 				function(server_name) -- default handler (optional)
@@ -94,6 +95,11 @@ return {
                 ["ruff"] = function ()
                     local lspconfig = require("lspconfig")
                     lspconfig.ruff.setup({})
+                end,
+
+                ["clangd"] = function ()
+                    local lspconfig = require("lspconfig")
+                    lspconfig.clangd.setup({})
                 end
 			},
 		})
