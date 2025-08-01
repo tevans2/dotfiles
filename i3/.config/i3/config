@@ -22,6 +22,9 @@ exec --no-startup-id dex-autostart --autostart --environment i3
 # Start picom compositor
 exec --no-startup-id picom
 
+# Set wallpaper
+exec_always --no-startup-id feh --no-fehbg --bg-center ~/Pictures/desktop_koi.jpg ~/Pictures/desktop_koi.jpg
+
 
 # Start polybar
 exec_always --no-startup-id killall polybar
@@ -29,6 +32,10 @@ exec_always --no-startup-id ~/.config/polybar/launch.sh --forest
 
 # Remap Caps lock
 exec --no-startup-id setxkbmap -option ctrl:nocaps
+
+# Monitor keybinds
+bindsym $mod+Shift+greater move container to output right
+bindsym $mod+Shift+less move container to output left
 
 
 # class                 border  bground text    indicator child_border
@@ -57,17 +64,24 @@ exec --no-startup-id nm-applet
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5% && $refresh_i3status
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5% && $refresh_i3status
 bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
 bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 
 # Use brightnessctl to adjust screen brightness
-bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl -s 5%+
-bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl -s 5%-
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl s 5%+
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl s 5%-
+
 
 # Use Display key to call Arandr
 bindsym XF86Display exec --no-startup-id arandr
+
+# Remove window border
+for_window [class=".*"] border pixel 0
+
+# Add gaps
+gaps inner 10
 
 # use these keys for focus, movement, and resize directions when reaching for
 # the arrows is not convenient
@@ -92,6 +106,12 @@ bindsym $mod+space exec "rofi -modi drun,run -show drun"
 # There also is i3-dmenu-desktop which only displays applications shipping a
 # .desktop file. It is a wrapper around dmenu, so you need that installed.
 # bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
+
+# Clipboard Manager
+
+set $mclip ~/scripts/rofi-clipboard-manager/mclip.py
+bindsym $mod+shift+v exec rofi -show "clipboard:$mclip menu" && $mclip paste
+exec --no-startup-id $mclip daemon
 
 # change focus
 bindsym $mod+$left focus left

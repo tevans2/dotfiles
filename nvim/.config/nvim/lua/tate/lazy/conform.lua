@@ -8,6 +8,7 @@ return {
                 python = { "isort", "ruff_format" },
                 xml = { "xmllint" },
                 json = { "jq" },
+                c = { "clang-format" },
                 ["*"] = { "codespell" }
             }
         })
