@@ -77,6 +77,10 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl s 5%-
 # Use Display key to call Arandr
 bindsym XF86Display exec --no-startup-id arandr
 
+
+# Screenshots
+bindsym $mod+Shift+s exec flameshot gui
+
 # Remove window border
 for_window [class=".*"] border pixel 0
 
