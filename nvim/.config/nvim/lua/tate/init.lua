@@ -49,6 +49,14 @@ autocmd('LspAttach', {
     end
 })
 
+-- C89 commenting
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "c",
+    callback = function()
+        vim.bo.commentstring = "/* %s */"
+    end
+})
+
 
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0
