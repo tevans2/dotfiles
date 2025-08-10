@@ -72,9 +72,7 @@ return {
       })
 
       -- Enable servers you have installed on your system/container
-      lspconfig.gopls.setup({})
-      lspconfig.rust_analyzer.setup({})
-      -- add more here (clangd, pyright, etc.)
+      lspconfig.clangd.setup({})
     end,
   },
 }
