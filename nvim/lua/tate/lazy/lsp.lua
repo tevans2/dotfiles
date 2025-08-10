@@ -12,7 +12,6 @@ local root_files = {
 return {
 	"neovim/nvim-lspconfig",
 	dependencies = {
-		"stevearc/conform.nvim",
 		"williamboman/mason.nvim",
 		"williamboman/mason-lspconfig.nvim",
 		"hrsh7th/cmp-nvim-lsp",
@@ -23,25 +22,9 @@ return {
 		"L3MON4D3/LuaSnip",
 		"saadparwaiz1/cmp_luasnip",
 		"j-hui/fidget.nvim",
-		{
-			"folke/lazydev.nvim",
-			ft = "lua", -- only load on lua files
-			opts = {
-				library = {
-					-- See the configuration section for more details
-					-- Load luvit types when the `vim.uv` word is found
-					{ path = "${3rd}/luv/library", words = { "vim%.uv" } },
-				},
-			},
-		},
 	},
 
 	config = function()
-		require("conform").setup({
-			formatters_by_ft = {
-				lua = { "stylua" },
-			},
-		})
 		local cmp = require("cmp")
 		local cmp_lsp = require("cmp_nvim_lsp")
 		local capabilities = vim.tbl_deep_extend(
@@ -56,9 +39,8 @@ return {
 		require("mason-lspconfig").setup({
 			ensure_installed = {
 				"lua_ls",
-                "pyright",
-                "ruff",
-                "clangd"
+				"pyright",
+				"clangd"
 			},
 			handlers = {
 				function(server_name) -- default handler (optional)
@@ -92,15 +74,10 @@ return {
 					lspconfig.pyright.setup({})
 				end,
 
-                ["ruff"] = function ()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.ruff.setup({})
-                end,
-
-                ["clangd"] = function ()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.clangd.setup({})
-                end
+				["clangd"] = function ()
+					local lspconfig = require("lspconfig")
+					lspconfig.clangd.setup({})
+				end
 			},
 		})
 
@@ -119,7 +96,6 @@ return {
 				["<C-Space>"] = cmp.mapping.complete(),
 			}),
 			sources = cmp.config.sources({
-				{ name = "copilot", group_index = 2 },
 				{ name = "nvim_lsp" },
 				{ name = "luasnip" }, -- For luasnip users.
 			}, {
@@ -128,14 +104,6 @@ return {
 			window = {
 				completion = cmp.config.window.bordered(),
 				documentation = cmp.config.window.bordered(),
-			},
-		})
-
-		-- Setup up vim-dadbod
-		cmp.setup.filetype({ "sql" }, {
-			sources = {
-				{ name = "vim-dadbod-completion" },
-				{ name = "buffer" },
 			},
 		})
 
