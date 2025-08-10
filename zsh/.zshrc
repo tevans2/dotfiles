@@ -117,3 +117,7 @@ export NVM_DIR="$HOME/.nvm"
 export ZEIT_DB=~/.config/zeit.db
 source ~/.zeit_completion.zsh
 
+# Add C compiler alias
+alias ccc='function _ccc() { fname="$1"; cc -Wall -ansi -pedantic "$fname" -o "${fname%.c}"; }; _ccc'
+
+export PATH="$HOME/.local/bin:$PATH"
