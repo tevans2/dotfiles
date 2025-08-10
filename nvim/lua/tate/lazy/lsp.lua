@@ -1,122 +1,81 @@
-local root_files = {
-	".luarc.json",
-	".luarc.jsonc",
-	".luacheckrc",
-	".stylua.toml",
-	"stylua.toml",
-	"selene.toml",
-	"selene.yml",
-	".git",
-}
-
+-- lua/plugins/core.lua
 return {
-	"neovim/nvim-lspconfig",
-	dependencies = {
-		"williamboman/mason.nvim",
-		"williamboman/mason-lspconfig.nvim",
-		"hrsh7th/cmp-nvim-lsp",
-		"hrsh7th/cmp-buffer",
-		"hrsh7th/cmp-path",
-		"hrsh7th/cmp-cmdline",
-		"hrsh7th/nvim-cmp",
-		"L3MON4D3/LuaSnip",
-		"saadparwaiz1/cmp_luasnip",
-		"j-hui/fidget.nvim",
-	},
+  -- nvim-cmp + LSP completion capabilities
+  {
+    "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+      "L3MON4D3/LuaSnip",
+      "saadparwaiz1/cmp_luasnip",
+    },
+    config = function()
+      local cmp = require("cmp")
+      local luasnip = require("luasnip")
 
-	config = function()
-		local cmp = require("cmp")
-		local cmp_lsp = require("cmp_nvim_lsp")
-		local capabilities = vim.tbl_deep_extend(
-			"force",
-			{},
-			vim.lsp.protocol.make_client_capabilities(),
-			cmp_lsp.default_capabilities()
-		)
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
+        },
+        sources = {
+          { name = "nvim_lsp" },
+          { name = "luasnip" },
+        },
+        mapping = cmp.mapping.preset.insert({
+          ["<CR>"]     = cmp.mapping.confirm({ select = false }),
+          ["<C-Space>"]= cmp.mapping.complete(),
+          ["<C-u>"]    = cmp.mapping.scroll_docs(-4),
+          ["<C-d>"]    = cmp.mapping.scroll_docs(4),
+        }),
+      })
+    end,
+  },
 
-		require("fidget").setup({})
-		require("mason").setup()
-		require("mason-lspconfig").setup({
-			ensure_installed = {
-				"lua_ls",
-				"pyright",
-				"clangd"
-			},
-			handlers = {
-				function(server_name) -- default handler (optional)
-					require("lspconfig")[server_name].setup({
-						capabilities = capabilities,
-					})
-				end,
+  -- LSP
+  {
+    "neovim/nvim-lspconfig",
+    version = "v1.8.0", -- same as tag; pin to keep stable
+    -- pin = true, -- (not needed when version is set; either is fine)
+    config = function()
+      -- Reserve sign column to prevent layout jumps
+      vim.opt.signcolumn = "yes"
 
-				["lua_ls"] = function()
-					local lspconfig = require("lspconfig")
-					lspconfig.lua_ls.setup({
-						capabilities = capabilities,
-						settings = {
-							Lua = {
-								format = {
-									enable = true,
-									-- Put format options here
-									-- NOTE: the value should be STRING!!
-									defaultConfig = {
-										indent_style = "space",
-										indent_size = "2",
-									},
-								},
-							},
-						},
-					})
-				end,
+      -- Augment LSP capabilities for nvim-cmp
+      local lspconfig = require("lspconfig")
+      local defaults = lspconfig.util.default_config
+      defaults.capabilities = vim.tbl_deep_extend(
+        "force",
+        defaults.capabilities,
+        require("cmp_nvim_lsp").default_capabilities()
+      )
 
-				["pyright"] = function()
-					local lspconfig = require("lspconfig")
-					lspconfig.pyright.setup({})
-				end,
+      -- Nice LSP keymaps only when a server attaches
+      vim.api.nvim_create_autocmd("LspAttach", {
+        desc = "LSP actions",
+        callback = function(event)
+          local opts = { buffer = event.buf }
+          local map = vim.keymap.set
 
-				["clangd"] = function ()
-					local lspconfig = require("lspconfig")
-					lspconfig.clangd.setup({})
-				end
-			},
-		})
+          map("n", "K",  vim.lsp.buf.hover, opts)
+          map("n", "gd", vim.lsp.buf.definition, opts)
+          map("n", "gD", vim.lsp.buf.declaration, opts)
+          map("n", "gi", vim.lsp.buf.implementation, opts)
+          map("n", "go", vim.lsp.buf.type_definition, opts)
+          map("n", "gr", vim.lsp.buf.references, opts)
+          map("n", "gs", vim.lsp.buf.signature_help, opts)
+          map("n", "<F2>", function() vim.lsp.buf.rename() end, opts)
+          map({ "n", "x" }, "<F3>", function() vim.lsp.buf.format({ async = true }) end, opts)
+          map("n", "<F4>", vim.lsp.buf.code_action, opts)
+        end,
+      })
 
-		local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-		cmp.setup({
-			snippet = {
-				expand = function(args)
-					require("luasnip").lsp_expand(args.body) -- For `luasnip` users.
-				end,
-			},
-			mapping = cmp.mapping.preset.insert({
-				["<C-k>"] = cmp.mapping.select_prev_item(cmp_select),
-				["<C-j>"] = cmp.mapping.select_next_item(cmp_select),
-				["<CR>"] = cmp.mapping.confirm({ select = true }),
-				["<C-Space>"] = cmp.mapping.complete(),
-			}),
-			sources = cmp.config.sources({
-				{ name = "nvim_lsp" },
-				{ name = "luasnip" }, -- For luasnip users.
-			}, {
-				{ name = "buffer" },
-			}),
-			window = {
-				completion = cmp.config.window.bordered(),
-				documentation = cmp.config.window.bordered(),
-			},
-		})
-
-		vim.diagnostic.config({
-			-- update_in_insert = true,
-			float = {
-				focusable = false,
-				style = "minimal",
-				border = "rounded",
-				source = "always",
-				header = "",
-				prefix = "",
-			},
-		})
-	end,
+      -- Enable servers you have installed on your system/container
+      lspconfig.gopls.setup({})
+      lspconfig.rust_analyzer.setup({})
+      -- add more here (clangd, pyright, etc.)
+    end,
+  },
 }
+

@@ -13,6 +13,7 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     spec = "tate.lazy",
+    rocks = { enabled = false },
     change_detection = { notify = false },
     ui = {
 	border = "single",
