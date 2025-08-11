@@ -16,6 +16,7 @@ return {
 			vim.keymap.set("n", "<leader>fg", builtin.grep_string, {})
 			vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
 			vim.keymap.set("n", "<leader>fr", builtin.lsp_references, {})
+			vim.keymap.set("n", "<leader>ftd", ":TodoTelescope<CR>", {})
 
 			-- Make more telescope keybindings
 		end,
