@@ -19,12 +19,14 @@ return {
             TODO = { icon = " ", color = "info" },
             HACK = { icon = " ", color = "warning" },
             WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+            ERRMSG = { icon = " ", color = "errormsg" },
             PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
             NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
             TEST = { icon = "⏲ ", color = "test", alt = { "TESTING", "PASSED", "FAILED" } },
             DONE = { icon = " ", color = "done" },
         },
         colors = {
+            errormsg = "#fca935",
             done = "#3bed4d"
         },
         highlight = {
