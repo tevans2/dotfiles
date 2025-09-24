@@ -1,4 +1,11 @@
 {
     "default_project_location": "~/Developer",
-    "jobs_tab_visibility": "shown"
+    "jobs_tab_visibility": "shown",
+    "initial_working_directory": "~",
+    "num_spaces_for_tab": 4,
+    "editor_theme": "Dracula",
+    "posix_terminal_shell": "zsh",
+    "editor_keybindings": "vim",
+    "code_formatter": "styler",
+    "source_with_echo": true
 }
