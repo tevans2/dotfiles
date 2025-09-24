@@ -3,7 +3,6 @@ import random
 
 dictino = {"testy", "trest1", "test2"}
 
-
 def do_stuff(x, y):
     this = None
     if this:

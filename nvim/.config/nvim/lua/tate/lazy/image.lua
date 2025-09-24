@@ -18,6 +18,9 @@ return {
 				html = {
 					enabled = false,
 				},
+				typst = {
+					enabled = false,
+				},
 				css = {
 					enabled = false,
 				},

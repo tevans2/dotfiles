@@ -89,7 +89,17 @@ return {
 
 				["pyright"] = function()
 					local lspconfig = require("lspconfig")
-					lspconfig.pyright.setup({})
+					lspconfig.pyright.setup({
+                        capabilities = capabilities,
+                        settings = {
+                            python = {
+                                analysis = {
+                                    extraPaths = { "layers/norman-client/python" },
+                                    diagnosticMode = "off",
+                                },
+                            },
+                        },
+                    })
 				end,
 
                 ["ruff"] = function ()
@@ -119,7 +129,7 @@ return {
 				["<C-Space>"] = cmp.mapping.complete(),
 			}),
 			sources = cmp.config.sources({
-				{ name = "copilot", group_index = 2 },
+				{ name = "supermaven", group_index = 2 },
 				{ name = "nvim_lsp" },
 				{ name = "luasnip" }, -- For luasnip users.
 			}, {

@@ -3,6 +3,25 @@ require("tate.set")
 require("tate.lazy_init")
 
 
+-- WISTL
+vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
+    pattern = {'*.wistl'},
+    command = 'setfiletype wistl',
+})
+vim.api.nvim_create_autocmd({'FileType'}, {
+    pattern = {'wistl'},
+    callback = function(ev)
+        vim.bo.autoindent = true
+        vim.bo.expandtab = true
+        vim.bo.shiftwidth = 4
+        vim.bo.softtabstop = 4
+        vim.bo.tabstop = 4
+        vim.bo.textwidth = 80
+    end
+})
+
+
+
 local augroup = vim.api.nvim_create_augroup
 local CustomGroup = augroup('CustomCommands', {})
 
