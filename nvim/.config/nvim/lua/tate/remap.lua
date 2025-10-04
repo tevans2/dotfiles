@@ -62,6 +62,14 @@ vim.keymap.set(
     "oif err != nil {<CR>}<Esc>Oreturn err<Esc>"
 )
 
+-- Spellcheck stuff
+vim.keymap.set("n", "<leader>sn", "]s")
+vim.keymap.set("n", "<leader>sp", "[s")
+vim.keymap.set("n", "<leader>sa", "zg")
+vim.keymap.set("n", "<leader>sw", "zw")
+vim.keymap.set("n", "<leader>sc", "z=")
+
+
 
 
 vim.keymap.set(

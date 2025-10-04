@@ -1,6 +1,5 @@
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# Initialization code that may require console input (password prompts, [y/n] confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -10,6 +9,10 @@ autoload -U compinit; compinit
 
 # Zsh config
 alias rz="echo 'Reloading .zshrc'; source ~/.zshrc"
+alias oz="nvim ~/.zshrc"
+
+# Venv
+alias venv="source .venv/bin/activate"
 
 # Tools
 alias study="~/tools/study.sh"
@@ -19,6 +22,9 @@ alias nv="nvim"
 #
 # nvim alias
 alias lg="lazygit"
+
+# Script alias
+alias ghr="~/.config/scripts/open-gh.sh"
 
 
 # Set up fzf key bindings and fuzzy completion
