@@ -24,10 +24,21 @@ return {
             NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
             TEST = { icon = "⏲ ", color = "test", alt = { "TESTING", "PASSED", "FAILED" } },
             DONE = { icon = " ", color = "done" },
+
+            -- wistl
+            PARSE = { icon = "⏲ ", color = "parser", alt = { "PARSER"} },
+            TABLES = { icon = "⏲ ", color = "tables", alt = { "SYMBOL", "HASH"} },
+            TYPECHECK = { icon = "⏲ ", color = "typecheck", alt = { "TYPECHECK"} },
+            CODEGEN = { icon = "⏲ ", color = "codegen"},
         },
         colors = {
             errormsg = "#fca935",
-            done = "#3bed4d"
+            done = "#3bed4d",
+            -- wistl
+            parser = "#0b03fc",
+            tables = "#0b03fc",
+            typecheck = "#3103fc",
+            codegen = "#7303fc"
         },
         highlight = {
             -- match keywords without requiring a trailing colon

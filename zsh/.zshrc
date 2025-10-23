@@ -102,3 +102,11 @@ bindkey -M vicmd '?' fzf-history-widget
 
 # Add C compiler alias
 alias ccc='function _ccc() { fname="$1"; cc -Wall -ansi -pedantic "$fname" -o "${fname%.c}"; }; _ccc'
+
+
+# WISTL STUFF
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+complete -f -X '!*.wistl' wistlc
+

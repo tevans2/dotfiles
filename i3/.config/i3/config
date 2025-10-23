@@ -31,7 +31,7 @@ exec_always --no-startup-id killall polybar
 exec_always --no-startup-id ~/.config/polybar/launch.sh --forest
 
 # Remap Caps lock
-exec --no-startup-id setxkbmap -option ctrl:nocaps
+exec_always --no-startup-id setxkbmap -option ctrl:nocaps
 
 # Monitor keybinds
 bindsym $mod+Shift+greater move container to output right
