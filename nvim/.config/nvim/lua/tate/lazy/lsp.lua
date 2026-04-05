@@ -58,7 +58,7 @@ return {
 				"lua_ls",
                 "pyright",
                 "ruff",
-                "clangd"
+                -- "clangd"
 			},
 			handlers = {
 				function(server_name) -- default handler (optional)
@@ -109,7 +109,10 @@ return {
 
                 ["clangd"] = function ()
                     local lspconfig = require("lspconfig")
-                    lspconfig.clangd.setup({})
+                    lspconfig.clangd.setup({
+                        capabilities = capabilities,
+                        autostart = false,
+                    })
                 end
 			},
 		})
@@ -134,6 +137,7 @@ return {
 				{ name = "luasnip" }, -- For luasnip users.
 			}, {
 				{ name = "buffer" },
+				{ name = "path" },  -- include file paths
 			}),
 			window = {
 				completion = cmp.config.window.bordered(),

@@ -32,4 +32,6 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
 
+vim.opt.tags = "./tags;,tags"
+
 -- vim.opt.colorcolumn = "80"

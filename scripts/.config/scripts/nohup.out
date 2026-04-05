@@ -1,0 +1,8 @@
+info: Opening plain database via sqlite backend.
+info: No plain database available. Continuing with sqlite database.
+nohup: open -a /Users/tate/Applications/Zathura.app: No such file or directory
+nohup: open -a /Users/tate/Applications/Zathura.app: No such file or directory
+nohup: zathura test.pdf: No such file or directory
+nohup: command -v zathura: No such file or directory
+info: Opening plain database via sqlite backend.
+info: No plain database available. Continuing with sqlite database.

@@ -77,6 +77,33 @@ vim.api.nvim_create_autocmd("FileType", {
     end
 })
 
+-- Markdown editing
+local grp = vim.api.nvim_create_augroup("ProseMode", { clear = true })
+vim.api.nvim_create_autocmd("FileType", {
+  group = grp,
+  pattern = { "markdown", "text", "gitcommit" },
+  callback = function()
+    vim.opt_local.spell = true
+    vim.opt_local.spelllang = { "en_us" }
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+    vim.opt_local.breakindent = true
+    vim.opt_local.showbreak = "↳ "
+
+    -- motions respect wrapped screen lines
+    vim.keymap.set("n", "j", function() return vim.v.count > 0 and "j" or "gj" end,
+      { buffer = true, expr = true, silent = true })
+    vim.keymap.set("n", "k", function() return vim.v.count > 0 and "k" or "gk" end,
+      { buffer = true, expr = true, silent = true })
+    vim.keymap.set("n", "0", "g0", { buffer = true })
+    vim.keymap.set("n", "$", "g$", { buffer = true })
+
+    -- spell nav (already built-in, mapped here just to remind)
+    -- ]s / [s jump between misspellings; z= shows suggestions
+  end,
+})
+
+
 
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0

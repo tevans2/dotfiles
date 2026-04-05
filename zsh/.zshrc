@@ -5,7 +5,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # Completions
-autoload -U compinit; compinit
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit
+compinit
 
 # Zsh config
 alias rz="echo 'Reloading .zshrc'; source ~/.zshrc"
@@ -17,22 +19,39 @@ alias venv="source .venv/bin/activate"
 # Tools
 alias study="~/tools/study.sh"
 
+# API Keys (stored in macOS Keychain)
+export OPENAI_API_KEY=$(security find-generic-password -a "$USER" -s "OPENAI_API_KEY" -w 2>/dev/null)
+
+# AI Q&A (fallback: pi -> claude -> codex -> openai -> fail)
+alias '?'='noglob ~/.config/scripts/search.sh'
+alias '??'='noglob ~/.config/scripts/ask.sh'
+
 # nvim alias
 alias nv="nvim"
-#
+
 # nvim alias
-alias lg="lazygit"
+alias lg="lazygit --use-config-file=$HOME/.config/lazygit/config.yml"
+
+# zathura app wrapper alias
+alias zathura='open -a "$HOME/Applications/Zathura.app"'
+
+# Quick look alias
+alias ql='shortcuts run "quick look" -i'
 
 # Script alias
 alias ghr="~/.config/scripts/open-gh.sh"
 
+# ls alias
+alias ls='ls -lGah'
+
+# md2pdf
+alias md2pdf="~/Developer/md2pdf/.venv/bin/md2pdf"
+
+alias gcc='gcc-15'
+
 
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
-
-
-# Ensure fzf widgets are loaded
-autoload -Uz fzf-file-widget fzf-history-widget
 
 # Bind '/' to fzf-file-widget (like Ctrl-T)
 bindkey -M vicmd '/' fzf-file-widget
@@ -40,54 +59,17 @@ bindkey -M vicmd '/' fzf-file-widget
 # Bind '?' to fzf-history-widget (like Ctrl-R)
 bindkey -M vicmd '?' fzf-history-widget
 
-# Use fd instead of fzf
-
-export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fd --type=d --hidden --strip-cwd-prefix --exclude .git"
-
-_fzf_compgen_path ()
-{
-  fd --hidden --exclude .git . "$1"
-}
-
-
-_fzf_compgen_dir ()
-{
-  fd --type=d --hidden --exclude .git . "$1"
-}
-
-source ~/fzf-git.sh/fzf-git.sh
-
-export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}'"
-export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
-
-_fzf_comprun ()
-{
-  local command=$1
-  shift
-
-  case "$command" in
-    cd)     fzf --preview 'eza --tree --color=always {} | head -200' "$@" ;;
-    export|unset) fzf --preview "eval 'echo \$' {}"   "$@" ;;
-    ssh) fzf --preview 'dig {}'   "$@" ;;
-    *) fzf --preview "--preview 'bat -n --color=always --line-range :500 {}'" "$@" ;;
-  esac
-}
-
-
-# eza - better ls
-
-alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions"
-
-# the fuck
-
-eval $(thefuck --alias)
-eval $(thefuck --alias fk)
-
 # zoxide better cd
-
 eval "$(zoxide init zsh)"
+c() {
+  if [ $# -eq 0 ]; then
+    cd ~
+    return
+  fi
+  local dir
+  dir="$(zoxide query -l -- "$*" | fzf)" || return
+  cd "$dir"
+}
 
 alias cd="z"
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
@@ -99,31 +81,51 @@ source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 
 source $(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 
-# Ensure fzf widgets are loaded
-autoload -Uz fzf-file-widget fzf-history-widget
 
-# Bind '/' to fzf-file-widget (like Ctrl-T)
-bindkey -M vicmd '/' fzf-file-widget
-
-# Bind '?' to fzf-history-widget (like Ctrl-R)
-bindkey -M vicmd '?' fzf-history-widget
-
-
-export PATH="/opt/homebrew/bin:/Users/tate/bin:$PATH"
-export JAVA_HOME=$(/usr/libexec/java_home -v 24.0.1)
-export PATH=$JAVA_HOME/bin/:$PATH
-
-export CLASSPATH=$CLASSPATH:~/algs4/algs4.jar
+export PATH="/opt/homebrew/bin:/Users/tate/bin:/Users/tate/docs/finance:$PATH"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
-# Zeit
-export ZEIT_DB=~/.config/zeit.db
-source ~/.zeit_completion.zsh
-
 # Add C compiler alias
 alias ccc='function _ccc() { fname="$1"; cc -Wall -ansi -pedantic "$fname" -o "${fname%.c}"; }; _ccc'
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# bun completions
+[ -s "/Users/tate/.bun/_bun" ] && source "/Users/tate/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/tate/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+# Added by Windsurf
+export PATH="/Users/tate/.codeium/windsurf/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/tate/.antigravity/antigravity/bin:$PATH"
+
+
+# atac
+export ATAC_KEY_BINDINGS="$HOME/.config/atac/atac.toml"
+
+export EDITOR="nvim"
+
+
+
+# hledger configuration
+export LEDGER_FILE="$HOME/docs/finance/journal/main.journal"
+
+# Optional: Convenient alias for finance commands
+alias hl='hledger'
+alias hlb='hledger balance'
+alias hli='hledger incomestatement'
+alias hlr='hledger register'
+
+

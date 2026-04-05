@@ -9,7 +9,6 @@ set pages-per-row 1
 
 #stop at page boundries
 set scroll-page-aware "true"
-set smooth-scroll "true"
 set scroll-full-overlap 0.01
 
 # clipboard
@@ -18,11 +17,14 @@ set selection-clipboard clipboard
 
 #zoom settings
 set zoom-min 10
-set guioptions ""
+set guioptions "none"
+
+set window-title-basename true  # window name is just filename NOT path
+set window-icon ~/.config/zathura/icon.ico
 
 # zathurarc-dark
 
-set font "inconsolata 15"
+set font "Monospace Regular 24"
 set default-bg "#000000" #00
 set default-fg "#F7F7F6" #01
 
@@ -60,10 +62,6 @@ set recolor-keephue "true"
 set render-loading "false"
 
 
-map s set scroll-step 1
-map S set scroll-step 50
+map <C-s> set scroll-step 1
+map <C-S> set scroll-step 50
 
-
-# unmap f
-# map f toggle_fullscreen
-# map [fullscreen] f toggle_fullscreen

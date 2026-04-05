@@ -90,6 +90,13 @@ vim.keymap.set(
     "oif err != nil {<CR>}<Esc>O.logger.Error(\"error\", \"error\", err)<Esc>F.;i"
 )
 
+-- Spell fix while in insert mode - (top suggestion)
+vim.keymap.set(
+    "i",
+    "<C-l>",
+    "<c-g>u<Esc>[s1z=`]a<c-g>u"
+)
+
 
 vim.keymap.set("n", "<leader>ca", function()
     require("cellular-automaton").start_animation("make_it_rain")
