@@ -1,0 +1,57 @@
+diff --git a/src/app/input.rs b/src/app/input.rs
+index 3a83073..c677ab0 100644
+--- a/src/app/input.rs
++++ b/src/app/input.rs
+@@ -82,7 +82,42 @@ pub(super) fn handle_event(
+                         state.focus_state.focus = Focus::Panes;
+                     }
+                 }
+-                KeyCode::Char('j') | KeyCode::Down => match state.focus_state.focus {
++                // Local patch: `j`/`k` stay inside the agent list. At either
++                // end of the list they stop, instead of handing focus to the
++                // filter row or the activity log. The arrow keys keep the
++                // upstream filter -> panes -> activity traversal, so the
++                // bottom panel is still reachable from the keyboard.
++                KeyCode::Char('j') => match state.focus_state.focus {
++                    Focus::Filter => {
++                        state.focus_state.focus = Focus::Panes;
++                    }
++                    Focus::Panes => {
++                        if state.move_pane_selection(1) {
++                            state.global.queue_cursor_save();
++                        }
++                    }
++                    Focus::ActivityLog => state.scroll_bottom(1),
++                },
++                KeyCode::Char('k') => match state.focus_state.focus {
++                    Focus::Filter => {}
++                    Focus::Panes => {
++                        if state.move_pane_selection(-1) {
++                            state.global.queue_cursor_save();
++                        }
++                    }
++                    Focus::ActivityLog => {
++                        let at_top = match state.bottom_tab {
++                            BottomTab::Activity => state.activity.scroll.offset == 0,
++                            BottomTab::GitStatus => state.scrolls.git.offset == 0,
++                        };
++                        if at_top {
++                            state.focus_state.focus = Focus::Panes;
++                        } else {
++                            state.scroll_bottom(-1);
++                        }
++                    }
++                },
++                KeyCode::Down => match state.focus_state.focus {
+                     Focus::Filter => {
+                         state.focus_state.focus = Focus::Panes;
+                     }
+@@ -95,7 +130,7 @@ pub(super) fn handle_event(
+                     }
+                     Focus::ActivityLog => state.scroll_bottom(1),
+                 },
+-                KeyCode::Char('k') | KeyCode::Up => match state.focus_state.focus {
++                KeyCode::Up => match state.focus_state.focus {
+                     Focus::Filter => {}
+                     Focus::Panes => {
+                         if state.move_pane_selection(-1) {
