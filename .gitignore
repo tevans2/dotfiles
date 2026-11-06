@@ -1,3 +1,24 @@
-/tmux/plugins/*
-/raycast/extentions/*
+# macOS / editors
 .DS_Store
+*.swp
+
+# Written by tools at runtime, not config
+.zcompdump*
+__pycache__/
+*.pyc
+nohup.out
+lazygit/.config/lazygit/state.yml
+configstore/
+
+# Installed by tpm (plugin list lives in tmux.conf; local patches in tmux/.config/tmux/patches)
+tmux/.config/tmux/plugins/
+
+# Raycast
+/raycast/extentions/*
+
+# Secrets never live here: secrets.zsh only looks keys up (Keychain / Doppler)
+*.env
+.env*
+
+# Tool-made backups
+*.bak
