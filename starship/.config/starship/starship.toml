@@ -1,0 +1,132 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+palette = "dracula"
+add_newline = true
+
+format = """
+[╭─ ](bold purple)$os$directory$git_branch$git_status$python$nodejs$rust$golang$docker_context
+[╰─](bold purple)$character"""
+
+right_format = "$cmd_duration $time"
+
+[palettes.dracula]
+background = "#282a36"
+current = "#44475a"
+foreground = "#f8f8f2"
+comment = "#6272a4"
+cyan = "#8be9fd"
+green = "#7bd88f"
+orange = "#ffb86c"
+pink = "#ff79c6"
+purple = "#bd93f9"
+red = "#ff5555"
+yellow = "#f1fa8c"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold yellow)"
+
+[os]
+disabled = false
+format = "[$symbol](bold comment)"
+
+[os.symbols]
+Macos = " "
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = "…/"
+read_only = " 󰌾"
+home_symbol = "~"
+format = "[ 󰉋 $path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+symbol = " "
+style = "bold green"
+format = "[on  $symbol$branch]($style) "
+
+[git_status]
+style = "bold green"
+format = "$all_status$ahead_behind"
+conflicted = "[=${count} ](bold red)"
+ahead = "[⇡${count} ](bold cyan)"
+behind = "[⇣${count} ](bold cyan)"
+diverged = "[⇕⇡${ahead_count}⇣${behind_count} ](bold yellow)"
+untracked = "[?${count} ](bold blue)"
+stashed = "[≡${count} ](bold purple)"
+modified = "[!${count} ](bold yellow)"
+staged = "[+${count} ](bold green)"
+renamed = "[»${count} ](bold cyan)"
+deleted = "[✘${count} ](bold red)"
+
+[python]
+symbol = " "
+style = "bold yellow"
+format = "[$symbol$virtualenv]($style) "
+detect_extensions = ["py"]
+detect_files = [".python-version", "Pipfile", "pyproject.toml", "requirements.txt", "setup.py"]
+
+[nodejs]
+symbol = " "
+style = "bold green"
+format = "[$symbol($version )]($style)"
+detect_extensions = ["js", "mjs", "cjs", "ts", "tsx"]
+detect_files = ["package.json", ".node-version", ".nvmrc"]
+
+[rust]
+symbol = "󱘗 "
+style = "bold orange"
+format = "[$symbol($version )]($style)"
+
+[golang]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol($version )]($style)"
+
+[docker_context]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$context]($style) "
+only_with_files = true
+
+[cmd_duration]
+min_time = 2000
+style = "bold yellow"
+format = "[ $duration]($style)"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "bold comment"
+format = "[$time]($style)"
+
+# Keep commonly-used language icons preloaded
+[bun]
+symbol = " "
+
+[c]
+symbol = " "
+
+[cpp]
+symbol = " "
+
+[java]
+symbol = " "
+
+[lua]
+symbol = " "
+
+[php]
+symbol = " "
+
+[ruby]
+symbol = " "
+
+[swift]
+symbol = " "
+
+[zig]
+symbol = " "

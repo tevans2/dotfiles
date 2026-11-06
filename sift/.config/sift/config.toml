@@ -1,0 +1,48 @@
+# Sift configuration. Changes apply the next time the launcher opens.
+
+[clipboard]
+# Keep a history of copied text (plain text only), searchable by typing
+# "clip" and then words, as in "clip invoice". Off by default: copied text
+# can be sensitive. Text that password managers mark as concealed is never
+# kept. Turning this off stops recording and hides the history; the
+# "Clear Clipboard History" command deletes it.
+enabled = true
+# How many entries to keep.
+max_items = 200
+
+[updates]
+# Once a day at most, ask GitHub whether a newer Sift has been released,
+# and say so in the launcher. One HTTPS request; nothing is downloaded or
+# installed, and nothing about you is sent. Set to false to never check.
+check = true
+
+[window_manager]
+enabled = false
+automatic_tiling = false
+
+# Snippets: search by name (or keyword); Enter copies the text.
+# {date}, {time} and {datetime} are replaced when copied.
+#
+# [[snippets]]
+# name = "Email signature"
+# keyword = "sig"
+# text = """
+# Best regards,
+# Kylian
+# """
+
+# Custom commands: search by name; Enter runs them. Each has exactly one
+# of `url` (opened in its default app), `open` (a file, folder or app) or
+# `shell` (run with /bin/sh; output goes to the log).
+#
+# [[commands]]
+# name = "Sift on GitHub"
+# url = "https://github.com/kylianmarceau/sift"
+#
+# [[commands]]
+# name = "Projects folder"
+# open = "~/Documents/projects"
+#
+# [[commands]]
+# name = "Flush DNS cache"
+# shell = "dscacheutil -flushcache"

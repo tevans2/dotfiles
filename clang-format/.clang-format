@@ -1,0 +1,62 @@
+# .clang-format
+BasedOnStyle: LLVM
+Language: C
+
+### Indentation & width
+UseTab: ForIndentation        # tabs for indent; spaces allowed for alignment
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 80
+
+### Switch/case
+IndentCaseLabels: true        # case labels indented one level relative to switch
+IndentCaseBlocks: false       # keep statements one indent under 'case'
+
+### Spacing
+SpaceBeforeParens: ControlStatements   # space after if/for/while/switch; none for calls
+SpacesInParentheses: false
+SpacesInCStyleCastParentheses: false
+SpaceAfterCStyleCast: false
+SpacesInAngles: false
+SpacesBeforeTrailingComments: 1
+
+### Braces
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true          # functions: opening brace on its own line (flush left)
+  AfterControlStatement: false # if/for/while/switch: brace on same line
+  AfterClass: false
+  AfterEnum: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false            # "} else {" stays on same line
+  BeforeLambdaBody: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+### Short one-liners (discourage brace-less style)
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
+
+### Comments & long strings (for #19)
+ReflowComments: true          # wrap /* ... */ and // comments to ColumnLimit
+BreakStringLiterals: true      # split overlong string literals across lines
+PenaltyBreakComment: 1
+PenaltyExcessCharacter: 100000 # strongly avoid lines > ColumnLimit
+
+### Preprocessor
+IndentPPDirectives: None       # '#' at left margin
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+### Empty lines (for #17)
+MaxEmptyLinesToKeep: 1         # keep at most one blank line (won't auto-insert)
+
+### Includes
+SortIncludes: false            # preserve your include order (project headers first)
+IncludeBlocks: Preserve
+
