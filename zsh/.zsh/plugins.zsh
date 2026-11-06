@@ -1,0 +1,45 @@
+if [[ -n "${TATE_ZSH_PLUGINS_LOADED:-}" ]]; then
+  return
+fi
+TATE_ZSH_PLUGINS_LOADED=1
+
+# Starship prompt
+eval "$(starship init zsh)"
+
+# Atuin (must init before vi-mode, keybinds set after)
+eval "$(atuin init zsh --disable-up-arrow)"
+
+# Zsh vi mode
+source /opt/homebrew/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+
+# Rebind Ctrl+R to atuin after vi-mode loads (works in both insert and normal modes)
+zvm_after_init_commands+=('bindkey "^r" _atuin_search_widget')
+
+# fzf (disable Ctrl+R binding, atuin owns it)
+export FZF_CTRL_R_COMMAND=""
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+eval "$(fzf --zsh)"
+bindkey -M vicmd '/' fzf-file-widget
+# Unbind fzf's Ctrl+R in all modes
+bindkey -r "^r"
+bindkey -M viins "^r" _atuin_search_widget
+bindkey -M vicmd "^r" _atuin_search_widget
+
+# fzf-tab (must be after compinit and fzf)
+source /opt/homebrew/share/fzf-tab/fzf-tab.zsh
+
+
+# Autosuggestions (ghost text as you type)
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Bind Shift+Tab to accept autosuggestion
+bindkey '^[[Z' autosuggest-accept  # Shift+Tab accepts suggestion
+
+# Ctrl+L clears + redraws current command at top (instead of default clear)
+bindkey '^L' snap_to_top_widget
+bindkey -M emacs '^L' snap_to_top_widget
+bindkey -M viins '^L' snap_to_top_widget
+bindkey -M vicmd '^L' snap_to_top_widget
+
+# Autopair (auto-close brackets, quotes)
+source /opt/homebrew/share/zsh-autopair/autopair.zsh
