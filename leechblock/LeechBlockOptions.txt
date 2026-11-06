@@ -1,0 +1,22 @@
+# LeechBlock NG options. Import: LeechBlock Options > General > "Import Options from Text File", then click Save Options.
+# Format: only lines matching key=value are read; lines starting with # are ignored.
+# Keys are <option><setNumber>. days = bitmask, bit 0 = Sunday: Mon-Fri = 62, every day = 127.
+# Importing replaces ALL options: sets not listed here are reset to empty defaults.
+
+# --- Set 1: Games. Weekdays 09:00-17:00 you get 15 min/day, then blocked until 17:00. Evenings and weekends are free.
+setName1=Games
+sites1=fermi.gg geogridgame.com geoguessr.com krillion.io openguessr.com
+times1=0900-1700
+limitMins1=15
+limitPeriod1=86400
+conjMode1=true
+days1=62
+blockURL1=blocked.html?$S&$U
+
+# --- Set 2: Social and video. Never blocked, but a 30 s countdown page before each visit.
+setName2=Social
+sites2=instagram.com reddit.com tiktok.com x.com
+times2=0000-2400
+days2=127
+blockURL2=delayed.html?$S&$U
+delaySecs2=30

@@ -1,0 +1,6 @@
+# Only .librewolf/ is stowed (-> ~/.librewolf). Everything else is linked by link-profile.sh or kept as source.
+\.DS_Store
+^/README.*
+^/profile
+^/theme
+^/link-profile\.sh

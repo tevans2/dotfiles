@@ -1,0 +1,109 @@
+{
+	"name": "Vimium C",
+	"@time": "14/06/2026, 17:48:10",
+	"time": 1781452090018,
+	"environment": {
+		"extension": "2.12.2",
+		"platform": "mac",
+		"chromium": 147
+	},
+	"keyLayout": 2,
+	"keyMappings": [
+		"#!no-check",
+		"",
+		"# Tab movement",
+		"map <c-o> visitPreviousTab",
+		"",
+		"# Tab movement also works inside focused text inputs / web app composers",
+		"map <c-o:i> visitPreviousTab",
+		"# Arc-like command/new-tab flow",
+		"map <c-t> Vomnibar.activateInNewTab",
+		"map <c-t:i> Vomnibar.activateInNewTab",
+		"map <c-p> Vomnibar.activateTabs",
+		"map <c-p:i> Vomnibar.activateTabs",
+		"",
+		"# Avoid accidental tab switching on plain shifted j/k",
+		"unmap J",
+		"unmap K",
+		"",
+		"# Tab organization",
+		"map <c-s-j> moveTabRight",
+		"map <c-s-k> moveTabLeft",
+		"map <c-x>j closeTabsOnRight",
+		"map <c-x>k closeTabsOnLeft",
+		"map <c-x>o closeOtherTabs",
+		"map <c-x>p togglePinTab",
+		""
+	],
+	"searchEngines": [
+		"# Minimal search engines; use Helium !bangs for long-tail searches.",
+		"g|google: https://www.google.com/search?q=%s \\",
+		"  www.google.com re=/^(?:\\.[a-z]{2,4})?\\/search\\b.*?[#&?]q=([^#&]*)/i \\",
+		"  blank=https://www.google.com/ Google",
+		"d|ddg|duckduckgo: https://duckduckgo.com/?q=%s \\",
+		"  blank=https://duckduckgo.com/ DuckDuckGo",
+		"br|brave: https://search.brave.com/search?q=%s \\",
+		"  blank=https://search.brave.com/ Brave",
+		"",
+		"# Daily destinations",
+		"gh|github: https://github.com/search?q=%s \\",
+		"  blank=https://github.com/ GitHub",
+		"yt|youtube: https://www.youtube.com/results?search_query=%s \\",
+		"  blank=https://www.youtube.com/ YouTube",
+		"w|wiki: https://www.wikipedia.org/w/index.php?search=%s Wikipedia",
+		"gm|maps: https://www.google.com/maps?q=%s \\",
+		"  blank=https://www.google.com/maps Google Maps",
+		"gs|scholar: https://scholar.google.com/scholar?q=%s \\",
+		"  scholar.google.com re=/^(?:\\.[a-z]{2,4})?\\/scholar\\b.*?[#&?]q=([^#&]*)/i \\",
+		"  blank=https://scholar.google.com/ Google Scholar",
+		"lin|linear: https://linear.app/search?q=%s \\",
+		"  blank=https://linear.app/ Linear",
+		"",
+		"# Developer searches",
+		"mdn: https://developer.mozilla.org/search?q=%s MDN",
+		"npm: https://www.npmjs.com/search?q=%s npm",
+		"rs|docsrs: https://docs.rs/releases/search?query=%s docs.rs",
+		"",
+		"# Vimium C helpers",
+		"\\:i: vimium://sed/s/^//,lower\\ $S re= Lower case",
+		"v.m|math: vimium://math\\ $S re= Calculate",
+		"v.p: vimium://parse\\ $S re= Redo Search",
+		"js\\:|Js: javascript:\\ $S; JavaScript",
+		""
+	],
+	"exclusionRules": [
+		{
+			"pattern": "^https?://docs\\.google\\.com/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> j k "
+		},
+		{
+			"pattern": "^https?://(?:www\\.)?figma\\.com/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> f j k v "
+		},
+		{
+			"pattern": "^https?://(?:www\\.)?notion\\.so/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> j k "
+		},
+		{
+			"pattern": "^https?://(?:www\\.)?linear\\.app/",
+			"passKeys": "/ j k "
+		},
+		{
+			"pattern": "^https?://github\\.dev/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> f j k v "
+		},
+		{
+			"pattern": "^https?://vscode\\.dev/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> f j k v "
+		},
+		{
+			"pattern": "^https?://(?:www\\.)?discord\\.com/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> j k "
+		},
+		{
+			"pattern": "^https?://web\\.telegram\\.org/",
+			"passKeys": "/ <c-j> <c-k> <c-p> <c-t> j k "
+		}
+	],
+	"vimSync": false
+}

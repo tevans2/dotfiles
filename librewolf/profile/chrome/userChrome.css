@@ -1,0 +1,42 @@
+#TabsToolbar { display: none !important; }
+#sidebar-panel-header { display: none !important; }
+#sidebar-box { padding-inline-start: 0px !important; }
+
+* { border-radius: 0px !important; }
+
+#personal-toolbar-empty-description { display: none !important; }
+
+/* auto-hide nav bar: appears after 300ms of hovering the top edge, hides after 1s without hover.
+   Cmd+L (focus) shows it immediately. Delays are the last value in each `transition`. */
+#navigator-toolbox { min-height: 10px !important; }
+#nav-bar {
+  min-height: 0 !important;
+  max-height: 100px !important;
+  overflow: hidden !important;
+  transition: max-height 0.01s 300ms, opacity 0.01s 300ms !important;
+}
+#navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: max-height 0.01s 1s, opacity 0.01s 1s !important;
+}
+#navigator-toolbox:focus-within #nav-bar {
+  transition-delay: 0s !important;
+}
+
+/* Pinned nav bar. Cmd+Shift+B (Firefox's bookmarks-toolbar toggle) is the manual switch; the bookmarks
+   toolbar itself is hidden below, only its collapsed state is used. The switch flips the default:
+     - local/dev pages (localhost, 127.0.0.1, [::1], *.localhost, file://; Firefox tags these
+       .localResource on #identity-box): bar shown by default, Cmd+Shift+B hides it
+     - everywhere else: bar auto-hides by default, Cmd+Shift+B pins it open
+   Remove this whole block (and the #PersonalToolbar rule) to go back to auto-hide everywhere. */
+#PersonalToolbar { display: none !important; }
+
+#navigator-toolbox:not(:hover):not(:focus-within):has(#identity-box.localResource):has(#PersonalToolbar[collapsed="true"]) #nav-bar,
+#navigator-toolbox:not(:hover):not(:focus-within):has(#identity-box:not(.localResource)):has(#PersonalToolbar:not([collapsed="true"])) #nav-bar {
+  max-height: 100px !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transition: none !important;
+}
