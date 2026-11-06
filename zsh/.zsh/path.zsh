@@ -1,5 +1,10 @@
 # Consolidated PATH
-export PATH="/opt/homebrew/bin:$PATH"
+if [[ $OSTYPE == darwin* ]]; then
+  export PATH="/opt/homebrew/bin:$PATH"
+else
+  # home-manager packages, then the Nix daemon's own tools
+  export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
+fi
 export PATH="$XDG_CONFIG_HOME/scripts:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/docs/finance:$PATH"

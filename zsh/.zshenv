@@ -43,4 +43,6 @@ export TF_CLI_CONFIG_FILE="$XDG_CONFIG_HOME/terraform/credentials.tfrc.json"
 
 # Cargo env
 [[ -f "$CARGO_HOME/env" ]] && . "$CARGO_HOME/env"
-. "/Users/tate/.local/share/cargo/env"
+
+# home-manager session variables (Linux hosts)
+[[ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]] && . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"

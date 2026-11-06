@@ -3,6 +3,16 @@ if [[ -n "${TATE_ZSH_PLUGINS_LOADED:-}" ]]; then
 fi
 TATE_ZSH_PLUGINS_LOADED=1
 
+# Plugin files come from Homebrew on macOS and from the Nix profile (home-manager) on Linux.
+_plugin() {
+  local f
+  for f in "$@"; do
+    [[ -r $f ]] && { source "$f"; return 0; }
+  done
+  print -u2 "zsh: plugin not found: ${1:t}"
+}
+_nix=$HOME/.nix-profile/share
+
 # Starship prompt
 eval "$(starship init zsh)"
 
@@ -10,7 +20,8 @@ eval "$(starship init zsh)"
 eval "$(atuin init zsh --disable-up-arrow)"
 
 # Zsh vi mode
-source /opt/homebrew/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+_plugin /opt/homebrew/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh \
+        $_nix/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 
 # Rebind Ctrl+R to atuin after vi-mode loads (works in both insert and normal modes)
 zvm_after_init_commands+=('bindkey "^r" _atuin_search_widget')
@@ -26,11 +37,13 @@ bindkey -M viins "^r" _atuin_search_widget
 bindkey -M vicmd "^r" _atuin_search_widget
 
 # fzf-tab (must be after compinit and fzf)
-source /opt/homebrew/share/fzf-tab/fzf-tab.zsh
+_plugin /opt/homebrew/share/fzf-tab/fzf-tab.zsh \
+        $_nix/fzf-tab/fzf-tab.zsh
 
 
 # Autosuggestions (ghost text as you type)
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+_plugin /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+        $_nix/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Bind Shift+Tab to accept autosuggestion
 bindkey '^[[Z' autosuggest-accept  # Shift+Tab accepts suggestion
@@ -42,4 +55,6 @@ bindkey -M viins '^L' snap_to_top_widget
 bindkey -M vicmd '^L' snap_to_top_widget
 
 # Autopair (auto-close brackets, quotes)
-source /opt/homebrew/share/zsh-autopair/autopair.zsh
+_plugin /opt/homebrew/share/zsh-autopair/autopair.zsh \
+        $_nix/zsh/zsh-autopair/autopair.zsh
+unset _nix
