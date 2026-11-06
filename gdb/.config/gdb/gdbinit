@@ -1,0 +1,33 @@
+set disassembly-glavor intel
+set pagination off
+set confirm off
+set print pretty on
+set dissassemble-next-line on
+set history save on
+
+# Runs when executable is loaded
+define hookpost-file
+    tui enable
+    layout asm
+    focus asm
+
+    # Display registers
+    display/i $eip
+    display $eax
+    display $ebx
+    display $ecx
+    display $edx
+    display $esi
+    display $edi
+    display $ebp
+    display $esp
+end
+
+# show first 4 arguments
+define showargs4
+    printf "arg1 @ [ebp+8] = 0x%x\n", *(unsigned int*)($ebp+8)
+    printf "arg2 @ [ebp+12] = 0x%x\n", *(unsigned int*)($ebp+12)
+    printf "arg3 @ [ebp+16] = 0x%x\n", *(unsigned int*)($ebp+16)
+    printf "arg4 @ [ebp+20] = 0x%x\n", *(unsigned int*)($ebp+20)
+end
+
