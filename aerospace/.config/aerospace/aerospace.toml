@@ -260,3 +260,7 @@ run = 'layout floating'
 if.app-id = 'net.tunnelblick.tunnelblick'
 check-further-callbacks = true
 run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'org.jkiss.dbeaver.core.product'
+run = 'layout floating'

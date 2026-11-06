@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Screen Time</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --border: #262b36; --text: #e6e9ef;
+    --muted: #8b93a5; --accent: #4c8dff;
+    --nimble: #4c8dff; --uni: #9d7bff; --tutoring: #ff9d4c;
+    --personal: #3ecf8e; --uncat: #565e6e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, "SF Pro Text", Helvetica, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tabs button { background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+  .tabs button.active { color: var(--text); border-color: var(--accent); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; }
+  .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .05em; }
+  .card .value { font-size: 24px; font-weight: 650; margin-top: 2px; }
+  .card .pct { font-size: 12px; color: var(--muted); }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 20px; }
+  .panel h2 { font-size: 14px; font-weight: 600; margin: 0 0 12px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 5px 8px; text-align: left; font-size: 13px; }
+  th { color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .bar > div { height: 100%; }
+  .daybar { display: flex; align-items: flex-end; gap: 4px; height: 120px; }
+  .daybar .day { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+    align-items: center; gap: 4px; height: 100%; }
+  .daybar .stack { width: 100%; max-width: 34px; height: 100%; display: flex;
+    flex-direction: column; justify-content: flex-end; border-radius: 4px; overflow: hidden; }
+  .daybar .stack > div { width: 100%; }
+  .daybar .lbl { font-size: 10px; color: var(--muted); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px;
+    font-size: 12px; color: var(--muted); }
+  .items td:first-child { color: var(--muted); }
+  .err { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Screen Time</h1>
+  <div class="sub" id="subtitle">loading…</div>
+  <div class="tabs" id="tabs">
+    <button data-days="1" class="active">Today</button>
+    <button data-days="7">7 days</button>
+    <button data-days="30">30 days</button>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+"use strict";
+
+// ============================================================================
+// Categorization rules — first match wins. Each rule's regex is tested against
+// a haystack built from the event:
+//   tmux events:  session name + window name
+//   web events:   url + page title
+//   window events: app name + window title
+// Edit freely and refresh — rules live in this file, not in browser storage.
+// ============================================================================
+const RULES = [
+  { cat: "Nimble",    color: "var(--nimble)",   re: /nimble|ntombi|normanbissett|email_backlog_manager/i },
+  { cat: "Uni",       color: "var(--uni)",      re: /stemlearn|sun\.ac\.za|teams\.microsoft|cs ?\d{3}|cs144|stellenbosch|lecture|tutorial|sioyek|notebook.google.com/i },
+  { cat: "Tutoring",  color: "var(--tutoring)", re: /tutoring/i },
+  { cat: "Personal/Projects", color: "var(--personal)", re: /locato|dotfiles|hack_tt/i },
+  { cat: "Personal/Finance",  color: "var(--personal)", re: /finance/i },
+  { cat: "Personal/Social",   color: "var(--personal)", re: /whatsapp|instagram|facebook|messenger|reddit|openguessr/i },
+  { cat: "Personal/Video",    color: "var(--personal)", re: /youtube|youtu\.be|netflix|showmax/i },
+  { cat: "Personal/Notes",    color: "var(--personal)", re: /life-notes|obsidian/i },
+];
+const UNCATEGORIZED = { cat: "Uncategorized", color: "var(--uncat)" };
+const TOP_ORDER = ["Nimble", "Uni", "Tutoring", "Personal", "Uncategorized"];
+const TOP_COLOR = c => `var(--${c.split("/")[0].toLowerCase()})`;
+
+const API = "/api/0";
+const DAY_MS = 86400e3;
+
+// ---------------------------------------------------------------- utilities
+function fmtDur(s) {
+  s = Math.round(s);
+  const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
+}
+function fmtDay(ts) {
+  return new Date(ts).toLocaleDateString(undefined, { weekday: "short" });
+}
+async function j(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url} → ${r.status}`);
+  return r.json();
+}
+
+// Flood heartbeat-style events: raw heartbeats are often stored with duration 0,
+// so extend each event to the next event's start when the gap is small, capped
+// by pulsetime so idle gaps are not counted. hardEnd clips the tail.
+function flood(evs, pulseMs, hardEnd) {
+  evs.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+  for (let i = 0; i < evs.length; i++) {
+    const s = Date.parse(evs[i].timestamp);
+    const natural = s + evs[i].duration * 1000;
+    let end;
+    if (i + 1 < evs.length) {
+      const next = Date.parse(evs[i + 1].timestamp);
+      end = (next - natural <= pulseMs) ? next : natural;
+    } else {
+      end = natural + pulseMs;
+    }
+    evs[i]._start = s;
+    evs[i]._end = Math.max(s, Math.min(end, hardEnd));
+  }
+  return evs;
+}
+
+// --------------------------------------------------------------- bucket discovery
+async function findBuckets() {
+  const buckets = await j(`${API}/buckets/`);
+  const out = {};
+  for (const [id, b] of Object.entries(buckets)) {
+    if (b.type === "afkstatus" && b.hostname !== "unknown") out.afk = id;
+    else if (b.type === "web.tab.current" && b.hostname !== "unknown") out.web = id;
+    else if (b.type === "currentwindow" && id.startsWith("aw-watcher-tmux")) out.tmux = id;
+    else if (b.type === "currentwindow" && !id.startsWith("aw-watcher-tmux") && b.hostname !== "unknown") out.window = id;
+  }
+  for (const k of ["afk", "web", "tmux", "window"]) {
+    if (!out[k]) throw new Error(`missing ${k} bucket — is everything running?`);
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ core model
+function categorize(kind, ev) {
+  const d = ev.data || {};
+  let hay;
+  if (kind === "tmux") hay = `${d.session_name || ""} ${d.window_name || ""}`;
+  else if (kind === "web") hay = `${d.url || ""} ${d.title || ""}`;
+  else hay = `${d.app || ""} ${d.title || ""}`;
+  for (const r of RULES) if (r.re.test(hay)) return r;
+  return UNCATEGORIZED;
+}
+
+/*
+ * Build a unified, deduplicated time model for [start, end).
+ * Source priority (first source covering a moment wins):
+ *   1. tmux session events        — replace terminal-app window time
+ *   2. browser url events         — replace Arc window time
+ *   3. other window events        — Obsidian, Finder, …
+ *   4. terminal window fallback   — kitty time with no tmux data
+ * Everything is clipped to non-afk time.
+ */
+async function buildModel(startISO, endISO) {
+  const b = await findBuckets();
+  const q = id => `${API}/buckets/${id}/events?start=${startISO}&end=${endISO}&limit=-1`;
+  const [afk, tmux, web, win] = await Promise.all([
+    j(q(b.afk)), j(q(b.tmux)), j(q(b.web)), j(q(b.window)),
+  ]);
+
+  const endMs = Math.min(Date.parse(endISO), Date.now());
+  flood(tmux, 120e3, endMs);
+  flood(web, 30e3, endMs);
+  flood(win, 10e3, endMs);
+
+  // Non-afk time: complement of afk intervals.
+  const afkIv = afk.filter(e => e.data.status === "afk")
+    .map(e => [Date.parse(e.timestamp), Date.parse(e.timestamp) + e.duration * 1000])
+    .sort((a, b2) => a[0] - b2[0]);
+  function activeSeconds(s, e) {
+    let afkT = 0;
+    for (const [as, ae] of afkIv) {
+      const s2 = Math.max(s, as), e2 = Math.min(e, ae);
+      if (e2 > s2) afkT += (e2 - s2) / 1000;
+    }
+    return (e - s) / 1000 - afkT;
+  }
+
+  const terminalApps = /^(kitty|tmux|terminal|iterm2?|alacritty|wezterm|ghostty)$/i;
+  const sources = [
+    { kind: "tmux", evs: tmux },
+    { kind: "web",  evs: web },
+    { kind: "window", evs: win.filter(e => {
+        const app = (e.data.app || "");
+        return !terminalApps.test(app) && app !== "Arc" &&
+               !/^(loginwindow|screensaver|lockscreen)$/i.test(app);
+      }) },
+    { kind: "term", evs: win.filter(e => terminalApps.test(e.data.app || "")) },
+  ];
+
+  // Slice the timeline at every event boundary; assign each slice to the first
+  // source covering it (within tmux: prefer the most recent heartbeat, i.e. the
+  // attached session over background activity).
+  const points = new Set([Date.parse(startISO), endMs]);
+  for (const s of sources) for (const e of s.evs) { points.add(e._start); points.add(e._end); }
+  const bounds = [...points].sort((a, b2) => a - b2);
+  const idx = sources.map(() => 0);
+
+  const slices = [];
+  for (let i = 0; i < bounds.length - 1; i++) {
+    const s = bounds[i], e = bounds[i + 1];
+    if (e <= s) continue;
+    for (let si = 0; si < sources.length; si++) {
+      const evs = sources[si].evs;
+      let k = idx[si];
+      while (k < evs.length && evs[k]._end <= s) k++;
+      idx[si] = k;
+      let cand = null;
+      for (let p = k; p < evs.length && evs[p]._start <= s; p++) {
+        if (evs[p]._end > s) cand = evs[p]; // later start wins within a source
+      }
+      if (cand) {
+        const r = categorize(sources[si].kind, cand);
+        const label =
+          sources[si].kind === "tmux" ? `tmux: ${cand.data.session_name}` :
+          sources[si].kind === "web" ? (cand.data.url || "").replace(/^https?:\/\//, "").split("/")[0] :
+          cand.data.app;
+        slices.push({ start: s, end: e, cat: r.cat, kind: sources[si].kind, label });
+        break;
+      }
+    }
+  }
+
+  // Aggregate.
+  const totals = {}, bySource = {}, byLabel = {}, byDay = {};
+  let tracked = 0;
+  for (const sl of slices) {
+    const dur = activeSeconds(sl.start, sl.end);
+    if (dur <= 0) continue;
+    tracked += dur;
+    const top = sl.cat.split("/")[0];
+    totals[top] = (totals[top] || 0) + dur;
+    bySource[`${top}|${sl.kind}`] = (bySource[`${top}|${sl.kind}`] || 0) + dur;
+    byLabel[`${top}|${sl.label}`] = (byLabel[`${top}|${sl.label}`] || 0) + dur;
+    const day = new Date(sl.start); day.setHours(0, 0, 0, 0);
+    const dk = day.getTime();
+    byDay[dk] = byDay[dk] || {};
+    byDay[dk][top] = (byDay[dk][top] || 0) + dur;
+  }
+  return { totals, bySource, byLabel, byDay, tracked, start: Date.parse(startISO), end: endMs };
+}
+
+// --------------------------------------------------------------------- render
+const KIND_NAMES = { tmux: "Terminal", web: "Browser", window: "Apps", term: "Terminal (unattributed)" };
+function render(model, days) {
+  const el = document.getElementById("content");
+  const order = TOP_ORDER.filter(t => model.totals[t]).concat(
+    Object.keys(model.totals).filter(t => !TOP_ORDER.includes(t)));
+
+  const cards = order.map(t => {
+    const v = model.totals[t];
+    return `<div class="card">
+      <div class="label"><span class="dot" style="background:${TOP_COLOR(t)}"></span>${t}</div>
+      <div class="value">${fmtDur(v)}</div>
+      <div class="pct">${Math.round(v / model.tracked * 100)}% of tracked</div>
+    </div>`;
+  }).join("");
+
+  const srcRows = order.map(t => {
+    const rows = Object.keys(KIND_NAMES).map(k => {
+      const v = model.bySource[`${t}|${k}`];
+      return v ? `<tr><td>${KIND_NAMES[k]}</td><td class="num">${fmtDur(v)}</td></tr>` : "";
+    }).join("");
+    const total = model.totals[t];
+    return `<tr>
+      <td><span class="dot" style="background:${TOP_COLOR(t)}"></span>${t}</td>
+      <td class="num" style="font-weight:600">${fmtDur(total)}</td>
+      <td><div class="bar"><div style="width:${total / model.tracked * 100}%;background:${TOP_COLOR(t)}"></div></div></td>
+    </tr>${rows ? `<tr><td colspan="3" style="padding:0 8px 8px 24px"><table style="width:auto">${rows}</table></td></tr>` : ""}`;
+  }).join("");
+
+  const labels = Object.entries(model.byLabel)
+    .map(([k, v]) => ({ top: k.split("|")[0], label: k.split("|").slice(1).join("|"), v }))
+    .sort((a, b) => b.v - a.v).slice(0, 12)
+    .map(x => `<tr><td>${x.label}</td><td><span class="dot" style="background:${TOP_COLOR(x.top)}"></span>${x.top}</td><td class="num">${fmtDur(x.v)}</td></tr>`)
+    .join("");
+
+  const ndays = Math.max(days, 7);
+  const dayKeys = [];
+  for (let i = ndays - 1; i >= 0; i--) {
+    const d = new Date(model.end - i * DAY_MS); d.setHours(0, 0, 0, 0);
+    dayKeys.push(d.getTime());
+  }
+  const maxDay = Math.max(...dayKeys.map(k =>
+    Object.values(model.byDay[k] || {}).reduce((a, b) => a + b, 0)), 1);
+  const bars = dayKeys.map(k => {
+    const parts = order.map(t => {
+      const v = (model.byDay[k] || {})[t];
+      return v ? `<div style="height:${v / maxDay * 100}%;background:${TOP_COLOR(t)}" title="${t}: ${fmtDur(v)}"></div>` : "";
+    }).join("");
+    const total = Object.values(model.byDay[k] || {}).reduce((a, b) => a + b, 0);
+    return `<div class="day"><div class="stack">${parts || `<div style="height:2px;background:var(--border)"></div>`}</div>
+      <div class="lbl" title="${fmtDur(total)}">${fmtDay(k)}</div></div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="cards">${cards}
+      <div class="card"><div class="label">Total tracked</div>
+        <div class="value">${fmtDur(model.tracked)}</div>
+        <div class="pct">afk time excluded</div></div>
+    </div>
+    <div class="panel"><h2>By day</h2>
+      <div class="daybar">${bars}</div>
+      <div class="legend">${order.map(t => `<span><span class="dot" style="background:${TOP_COLOR(t)}"></span>${t}</span>`).join("")}</div>
+    </div>
+    <div class="panel"><h2>Breakdown by source</h2>
+      <table><tr><th>Category</th><th class="num">Time</th><th style="width:40%"></th></tr>${srcRows}</table>
+    </div>
+    <div class="panel"><h2>Top items</h2>
+      <table class="items"><tr><th>Item</th><th>Category</th><th class="num">Time</th></tr>${labels}</table>
+    </div>`;
+}
+
+// ----------------------------------------------------------------------- boot
+let currentDays = 1;
+async function load(days) {
+  const content = document.getElementById("content");
+  content.innerHTML = "<div class='sub'>loading…</div>";
+  const end = new Date(); end.setHours(0, 0, 0, 0); end.setTime(end.getTime() + DAY_MS);
+  const start = new Date(end.getTime() - days * DAY_MS);
+  try {
+    const model = await buildModel(start.toISOString(), end.toISOString());
+    document.getElementById("subtitle").textContent =
+      `${start.toLocaleDateString()} → ${new Date(model.end - 1).toLocaleDateString()} · deduplicated: terminal sessions replace terminal-app time, browser URLs replace Arc time`;
+    render(model, days);
+  } catch (e) {
+    content.innerHTML = `<div class="err">${e.message}</div>`;
+  }
+}
+document.getElementById("tabs").addEventListener("click", ev => {
+  if (ev.target.tagName !== "BUTTON") return;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.remove("active"));
+  ev.target.classList.add("active");
+  currentDays = Number(ev.target.dataset.days);
+  load(currentDays);
+});
+load(currentDays);
+setInterval(() => load(currentDays), 5 * 60 * 1000);
+</script>
+</body>
+</html>
