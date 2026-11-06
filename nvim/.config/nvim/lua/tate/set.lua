@@ -34,4 +34,6 @@ vim.opt.foldlevelstart = 99
 
 vim.opt.tags = "./tags;,tags"
 
+vim.filetype.add({ extension = { h = "c" } })
+
 -- vim.opt.colorcolumn = "80"

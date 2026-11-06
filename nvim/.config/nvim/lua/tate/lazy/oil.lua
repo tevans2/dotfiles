@@ -1,18 +1,12 @@
 return {
-    'stevearc/oil.nvim',
+    "stevearc/oil.nvim",
     ---@module 'oil'
     ---@type oil.SetupOpts
     opts = {},
     -- Optional dependencies
     dependencies = { { "echasnovski/mini.icons", opts = {} } },
-    config = function ()
+    config = function()
         require("oil").setup({
-            vim.keymap.set("n", "-", function()
-              local dir = vim.fn.expand("%:p:h")
-              if dir == "" then dir = vim.fn.getcwd() end
-              require("oil").open(dir)
-            end, { desc = "Oil: open dir of current buffer (fallback CWD)" }),
-
             -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
             -- Set to false if you want some other plugin (e.g. netrw) to open when you edit directories.
             default_file_explorer = true,
@@ -78,10 +72,13 @@ return {
                 ["<leader>k"] = { "actions.select", opts = { horizontal = true } },
                 ["<C-h>"] = false,
                 ["<C-v>"] = false,
-                ["<C-p>"] = { "actions.preview", opts = {
-                    vertical = true,
-                    preview_split = "botright",
-                } },
+                ["<C-p>"] = {
+                    "actions.preview",
+                    opts = {
+                        vertical = true,
+                        preview_split = "botright",
+                    },
+                },
                 ["<C-c>"] = { "actions.close", mode = "n" },
                 ["<C-l>"] = false,
                 ["<C-r>"] = "actions.refresh",
@@ -99,7 +96,7 @@ return {
             use_default_keymaps = true,
             view_options = {
                 -- Show files and directories that start with "."
-                show_hidden = false,
+                show_hidden = true,
                 -- This function defines what is considered a "hidden" file
                 is_hidden_file = function(name, bufnr)
                     local m = name:match("^%.")
@@ -221,9 +218,15 @@ return {
             },
         })
 
+        vim.keymap.set("n", "-", function()
+            local dir = vim.fn.expand("%:p:h")
+            if dir == "" then
+                dir = vim.fn.getcwd()
+            end
+            require("oil").open(dir)
+        end, { desc = "Oil: open dir of current buffer (fallback CWD)" })
     end,
     -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
     -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
     lazy = false,
 }
-

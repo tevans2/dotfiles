@@ -1,45 +1,49 @@
 return {
-	{
-		"nvim-telescope/telescope.nvim",
-		tag = "0.1.8",
-		dependencies = { "nvim-lua/plenary.nvim" },
+    {
+        "nvim-telescope/telescope.nvim",
+        branch = "master",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-telescope/telescope-ui-select.nvim",
+        },
 
-		config = function()
-			require("telescope").setup({})
+        config = function()
+            local telescope = require("telescope")
+            local builtin = require("telescope.builtin")
+            local actions = require("telescope.actions")
 
-			local builtin = require("telescope.builtin")
-			local actions = require("telescope.actions")
-			vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
-			vim.keymap.set("n", "<C-p>", builtin.git_files, {})
-			vim.keymap.set("n", "<leader>fw", builtin.live_grep, {})
-			vim.keymap.set("n", "<leader>fj", builtin.jumplist, {})
-			vim.keymap.set("n", "<leader>fg", builtin.grep_string, {})
-			vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
-			vim.keymap.set("n", "<leader>fr", builtin.lsp_references, {})
+            telescope.setup({
+                defaults = {
+                    preview = {
+                        treesitter = false,
+                    },
+                    mappings = {
+                        i = {
+                            ["<C-k>"] = actions.move_selection_previous,
+                            ["<C-j>"] = actions.move_selection_next,
+                        },
+                    },
+                },
+                extensions = {
+                    ["ui-select"] = {
+                        require("telescope.themes").get_dropdown({}),
+                    },
+                },
+            })
 
-			-- Make more telescope keybindings
-		end,
-	},
-	{
-		"nvim-telescope/telescope-ui-select.nvim",
-		config = function()
-			local actions = require("telescope.actions")
-			require("telescope").setup({
-				defaults = {
-					mappings = {
-						i = {
-							["<C-k>"] = actions.move_selection_previous,
-							["<C-j>"] = actions.move_selection_next,
-						},
-					},
-				},
-				extensions = {
-					["ui-select"] = {
-						require("telescope.themes").get_dropdown({}),
-					},
-				},
-			})
-			require("telescope").load_extension("ui-select")
-		end,
-	},
+            telescope.load_extension("ui-select")
+
+            vim.keymap.set("n", "<leader>ff", function()
+                builtin.find_files({ cwd = vim.fn.getcwd() })
+            end, {})
+            vim.keymap.set("n", "<C-p>", function()
+                builtin.git_files({ cwd = vim.fn.getcwd() })
+            end, {})
+            vim.keymap.set("n", "<leader>fw", builtin.live_grep, {})
+            vim.keymap.set("n", "<leader>fj", builtin.jumplist, {})
+            vim.keymap.set("n", "<leader>fg", builtin.grep_string, {})
+            vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
+            vim.keymap.set("n", "<leader>fr", builtin.lsp_references, {})
+        end,
+    },
 }
