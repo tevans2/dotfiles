@@ -22,3 +22,4 @@ tmux/.config/tmux/plugins/
 
 # Tool-made backups
 *.bak
+*.zwc

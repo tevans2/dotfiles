@@ -1,11 +1,14 @@
-# Completions (cached for 24h)
+# Completions: a full check and dump rebuild once a day, the cached dump otherwise
 fpath=(~/.zsh/completions $HOME/.docker/completions $HOME/.bun $fpath)  # ~/.bun/_bun: bun completions
 autoload -Uz compinit
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-  compinit
-else
-  compinit -C
-fi
+() {
+  setopt local_options extended_glob  # (#q) glob qualifiers need it
+  if [[ ! -s ~/.zcompdump || -n ~/.zcompdump(#qN.mh+24) ]]; then
+    compinit && touch ~/.zcompdump  # compinit only rewrites the dump when it changed
+  else
+    compinit -C
+  fi
+}
 
 # Source config parts
 for conf in ~/.zsh/{options,secrets,aliases,functions,plugins,tools}.zsh; do

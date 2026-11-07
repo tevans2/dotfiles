@@ -1,11 +1,9 @@
 # API keys. Never stored in this repo (it's public).
 # Source of truth: Doppler project `dotfiles`, config `prd`.
-#   macOS: read from the Keychain (fast at shell startup).
+#   macOS: none loaded at startup; use `doppler run --project dotfiles --config prd -- <cmd>`.
 #   Linux: read from ~/.config/secrets.env, written by `secrets-sync`.
 
-if [[ $OSTYPE == darwin* ]]; then
-  export OPENAI_API_KEY=$(security find-generic-password -a "$USER" -s "OPENAI_API_KEY" -w 2>/dev/null)
-elif [[ -r ~/.config/secrets.env ]]; then
+if [[ $OSTYPE != darwin* && -r ~/.config/secrets.env ]]; then
   set -a; source ~/.config/secrets.env; set +a
 fi
 
