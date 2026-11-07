@@ -11,6 +11,9 @@ keybind = ctrl+shift+tab=text:\x1b[27;6;9~
 keybind = ctrl+alt+tab=next_tab
 keybind = ctrl+alt+shift+tab=previous_tab
 
+# Cursor trail, like kitty's cursor_trail (see the shader's header)
+custom-shader = shaders/cursor_smear.glsl
+
 # aesthetics
 background-opacity = 0.85
 background-blur=16
