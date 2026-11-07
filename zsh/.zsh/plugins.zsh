@@ -13,11 +13,27 @@ _plugin() {
 }
 _nix=$HOME/.nix-profile/share
 
+# Source a tool's `init` script from a cache, rebuilt when the tool's resolved
+# binary or the arguments change (saves ~20ms per tool per shell).
+#   _cached_init <name> <command> [args...]
+_cached_init() {
+  local name=$1 bin=${commands[$2]:A}
+  [[ -n $bin ]] || return 0
+  local cache=${XDG_CACHE_HOME:-$HOME/.cache}/zsh/init-$name.zsh
+  local key="# $bin ${*[3,-1]}" line
+  [[ -r $cache ]] && read -r line < $cache
+  if [[ $line != "$key" ]]; then
+    mkdir -p ${cache:h}
+    { print -r -- $key; "${@[2,-1]}" } > $cache.$$ && mv $cache.$$ $cache
+  fi
+  source $cache
+}
+
 # Starship prompt
-eval "$(starship init zsh)"
+_cached_init starship starship init zsh
 
 # Atuin (must init before vi-mode, keybinds set after)
-eval "$(atuin init zsh --disable-up-arrow)"
+_cached_init atuin atuin init zsh --disable-up-arrow
 
 # Zsh vi mode
 _plugin /opt/homebrew/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh \
@@ -29,7 +45,7 @@ zvm_after_init_commands+=('bindkey "^r" _atuin_search_widget')
 # fzf (disable Ctrl+R binding, atuin owns it)
 export FZF_CTRL_R_COMMAND=""
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-eval "$(fzf --zsh)"
+_cached_init fzf fzf --zsh
 bindkey -M vicmd '/' fzf-file-widget
 # Unbind fzf's Ctrl+R in all modes
 bindkey -r "^r"

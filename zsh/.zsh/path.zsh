@@ -1,4 +1,5 @@
-# Consolidated PATH
+# Consolidated PATH (-U: keep only the first copy of each entry)
+typeset -gU path PATH
 if [[ $OSTYPE == darwin* ]]; then
   export PATH="/opt/homebrew/bin:$PATH"
 else
