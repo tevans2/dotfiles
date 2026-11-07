@@ -4,6 +4,13 @@ keybind = cmd+s=text:\x01\x73
 # tmux prefix to toggle zoom on current pane
 keybind = cmd+b=text:\x01\x7a
 
+# Ctrl+Tab / Ctrl+Shift+Tab go to tmux and herdr (same codes as kitty.conf);
+# Ghostty's own tab switching moves to Ctrl+Alt+Tab.
+keybind = ctrl+tab=text:\x1b[27;5;9~
+keybind = ctrl+shift+tab=text:\x1b[27;6;9~
+keybind = ctrl+alt+tab=next_tab
+keybind = ctrl+alt+shift+tab=previous_tab
+
 # aesthetics
 background-opacity = 0.85
 background-blur=16
