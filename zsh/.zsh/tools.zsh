@@ -43,4 +43,4 @@ command_not_found_handler() {
 export ATAC_KEY_BINDINGS="$HOME/.config/atac/atac.toml"
 
 # Hledger
-export LEDGER_FILE="$HOME/docs/finance/journal/main.journal"
+export LEDGER_FILE="$HOME/Developer/projects/finance/journal/main.journal"

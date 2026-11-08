@@ -8,7 +8,7 @@ else
 fi
 export PATH="$XDG_CONFIG_HOME/scripts:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/docs/finance:$PATH"
+export PATH="$HOME/Developer/projects/finance:$PATH"
 export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
