@@ -3,7 +3,7 @@
 # straight away: the version alias/default names, else the newest installed.
 export NVM_DIR="$HOME/.nvm"
 () {
-  local v=$(<$NVM_DIR/alias/default 2>/dev/null)
+  local v; [[ -r $NVM_DIR/alias/default ]] && v=$(<$NVM_DIR/alias/default)  # nvm exists on the Mac only
   local dirs=($NVM_DIR/versions/node/${v:-x}(N/) $NVM_DIR/versions/node/v*(N/nOn))
   (( $#dirs )) && export PATH="${dirs[1]}/bin:$PATH"
 }
