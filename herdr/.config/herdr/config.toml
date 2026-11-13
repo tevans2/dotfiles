@@ -1,6 +1,6 @@
 # herdr configuration, bound to match tmux muscle memory (~/.config/tmux/tmux.conf).
 # Full key list: `prefix+?` in herdr, or "keys." in https://herdr.dev/docs/config-reference/
-# Keybindings are client-side, so this file also drives panes on homebox.
+# Keybindings are client-side, so this file also drives panes on thinker.
 
 onboarding = false
 

@@ -95,7 +95,8 @@ _deferred_plugins() {
   # Autosuggestions (ghost text as you type). It normally starts from precmd,
   # which has already run by now, so start it by hand.
   _plugin /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
-          $nix/zsh-autosuggestions/zsh-autosuggestions.zsh
+          $nix/zsh-autosuggestions/zsh-autosuggestions.zsh \
+          $nix/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
   (( $+functions[_zsh_autosuggest_start] )) && _zsh_autosuggest_start
   bindkey '^[[Z' autosuggest-accept  # Shift+Tab accepts suggestion
 
