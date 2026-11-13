@@ -12,6 +12,8 @@ home/
   darwin.nix    Mac only: AeroSpace, Ghostty, kitty, sioyek, ~/.librewolf, Keychain, diffnav
   linux.nix     Linux only: what nvim needs to build plugins
 flake.nix       homeModules (used by the homelab repo for thinker) + homeConfigurations."tate@mac"
+Brewfile        Mac apps and Mac-only tools (Homebrew)
+bootstrap.sh    new Mac → working setup
 exports/        settings exported from apps, imported by hand (Vimium C)
 archive/        configs no longer in use
 ```
@@ -28,9 +30,14 @@ archive/        configs no longer in use
 
 ## New Mac
 
-1. Install Nix: `curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh`, then open a new terminal.
-2. Clone: `git clone https://github.com/tevans2/dotfiles ~/dotfiles && cd ~/dotfiles`
-3. `NIX_CONFIG="experimental-features = nix-command flakes" nix run home-manager/release-26.05 -- switch --flake .#tate@mac -b pre-hm`
-4. Homebrew apps: Brewfile coming (stage 4).
+```sh
+git clone https://github.com/tevans2/dotfiles ~/dotfiles && ~/dotfiles/bootstrap.sh
+```
+
+It installs Nix, runs home-manager (links + command-line tools), installs Homebrew and the Brewfile, and lists the sign-ins to do by hand.
+
+## Apps (Homebrew)
+
+`Brewfile` lists what should be installed. `just brew` installs it; `just brew-cleanup` shows what's installed but not listed (`--force` removes it). Add an app by adding a line, not just `brew install`, or the next cleanup removes it.
 
 Secrets never live here: `config/zsh/.zsh/secrets.zsh` only looks keys up (Keychain / Doppler). The gitleaks pre-commit hook checks every commit (`just setup` once per clone).

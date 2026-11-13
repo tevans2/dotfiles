@@ -18,6 +18,14 @@ switch:
 update:
     nix flake update && just switch
 
+# Install everything in the Brewfile
+brew:
+    brew bundle --file=Brewfile
+
+# What's installed but not in the Brewfile (dry run); add --force to uninstall it
+brew-cleanup *flags:
+    brew bundle cleanup --file=Brewfile {{flags}}
+
 # Once per clone: the gitleaks pre-commit hook
 setup:
     git config core.hooksPath .githooks
