@@ -21,9 +21,9 @@ Written 2026-10-18. Most of the real config files live **outside** this repo (se
 | LibreWolf overrides | `~/.librewolf/librewolf.overrides.cfg` | `.librewolf/` (stowed: `~/.librewolf` -> this repo) |
 | Hopper (launcher + sidebar) | `about:addons` (installed from its `.xpi`) | its own repo: `~/Developer/projects/hopper` |
 | Theme | `caelus-theme@local` | `theme/caelus-theme.xpi` (repacked, install by hand) |
-| LeechBlock NG options | extension storage | `~/dotfiles/leechblock/LeechBlockOptions.txt` (import by hand) |
-| Karabiner rules | `~/dotfiles/karabiner/karabiner.json` (copy at `~/.config/karabiner/karabiner.json`) | Yes |
-| Vimium C config | `~/dotfiles/vimiumc/` (JSON export + README) | Yes |
+| LeechBlock NG options | extension storage | `~/dotfiles/archive/leechblock/LeechBlockOptions.txt` (import by hand) |
+| Karabiner rules | `~/dotfiles/config/karabiner/karabiner.json` (copy at `~/.config/karabiner/karabiner.json`) | Yes |
+| Vimium C config | `~/dotfiles/exports/vimiumc/` (JSON export + README) | Yes |
 | Bitwarden link to desktop app | `~/Library/Application Support/Mozilla/NativeMessagingHosts/com.8bit.bitwarden.json` | No (written by Bitwarden) |
 
 ### Installing on a machine
@@ -91,7 +91,7 @@ Sidebery was retired in favour of Hopper's sidebar (see the Hopper section at th
 
 ## Vimium C and Karabiner
 
-LibreWolf runs **Vimium C** (not plain Vimium). Its config is `~/dotfiles/vimiumc/vimium_c-*.json`.
+LibreWolf runs **Vimium C** (not plain Vimium). Its config is `~/dotfiles/exports/vimiumc/vimium_c-*.json`.
 Plain Vimium uses different command names (e.g. `Vomnibar.activateTabSelection` instead of
 `Vomnibar.activateTabs`), so don't import this file into it. Don't run both extensions at once.
 

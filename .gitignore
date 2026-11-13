@@ -7,11 +7,11 @@
 __pycache__/
 *.pyc
 nohup.out
-lazygit/.config/lazygit/state.yml
+config/lazygit/state.yml
 configstore/
 
-# Installed by tpm (plugin list lives in tmux.conf; local patches in tmux/.config/tmux/patches)
-tmux/.config/tmux/plugins/
+# Installed by tpm (plugin list lives in tmux.conf; local patches in config/tmux/patches)
+config/tmux/plugins/
 
 # Raycast
 /raycast/extentions/*
@@ -23,3 +23,7 @@ tmux/.config/tmux/plugins/
 # Tool-made backups
 *.bak
 *.zwc
+
+# Nix
+result
+result-*
