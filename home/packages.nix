@@ -1,5 +1,5 @@
-# The command-line tools the configs expect, on both machines.
-# Linux: installed now. Mac: still from Homebrew until stage 3 moves them here.
+# Command-line tools, the same versions on both machines (pinned by flake.lock).
+# Mac apps and Mac-only tools live in the Brewfile instead.
 { pkgs, ... }:
 
 {
@@ -16,9 +16,25 @@
     zsh-fzf-tab
     zsh-vi-mode
 
-    # tools the configs call
+    # editor and terminal
+    neovim
+    tmux
+
+    # everyday tools
+    btop
     delta
-    doppler
+    fd
+    gh
+    jq
+    just
     lazygit
+    ripgrep
+    tree
+
+    # secrets and repo hygiene
+    age
+    doppler
+    gitleaks
+    sops
   ];
 }

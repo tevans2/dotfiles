@@ -23,6 +23,7 @@
       pkgs = nixpkgs.legacyPackages.aarch64-darwin;
       modules = [
         ./home/common.nix
+        ./home/packages.nix
         ./home/darwin.nix
         {
           home.username = "tate";

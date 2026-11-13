@@ -8,7 +8,7 @@ My configs and the home-manager profile that installs and links them, on the Mac
 config/<app>/   the config files themselves; linked live, so edits need no rebuild
 home/
   common.nix    both machines: which configs are linked where, git settings
-  packages.nix  command-line tools (Linux now; the Mac still uses Homebrew for these)
+  packages.nix  command-line tools, both machines (Homebrew only for apps and Mac-only tools)
   darwin.nix    Mac only: AeroSpace, Ghostty, kitty, sioyek, ~/.librewolf, Keychain, diffnav
   linux.nix     Linux only: what nvim needs to build plugins
 flake.nix       homeModules (used by the homelab repo for thinker) + homeConfigurations."tate@mac"
