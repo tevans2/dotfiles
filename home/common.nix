@@ -28,8 +28,9 @@ in
     "tmux".source = link "tmux";
   };
 
-  # ~/.config/git/config is generated (read-only). Tools that write `git config --global`
-  # (gh, CodeRabbit, …) write to ~/.gitconfig instead, which git also reads: keep it as a normal file.
+  # ~/.config/git/config is generated (read-only). GIT_CONFIG_GLOBAL (config/zsh/.zshenv) points git at
+  # ~/.config/git/local instead: a normal file that includes the generated one, so tools that write
+  # `git config --global` (gh, CodeRabbit, …) work, and nothing lands in ~ itself.
   programs.git = {
     enable = true;
     settings = {
@@ -47,8 +48,12 @@ in
       "**/.claude/settings.local.json"
     ];
   };
-  home.activation.mutableGitconfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    [ -e "$HOME/.gitconfig" ] || run touch "$HOME/.gitconfig"
+  home.activation.gitLocal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    local_cfg="${config.xdg.configHome}/git/local"
+    if [ ! -e "$local_cfg" ]; then
+      run mkdir -p "$(dirname "$local_cfg")"
+      printf '[include]\n\tpath = config\n' > "$local_cfg"
+    fi
   '';
 
   # A new machine gets ~/dotfiles cloned on its first switch (public repo; edits are pushed from a machine with keys).

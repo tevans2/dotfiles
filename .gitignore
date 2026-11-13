@@ -27,3 +27,6 @@ config/tmux/plugins/
 # Nix
 result
 result-*
+
+# A separate git clone of a third-party tool (acsandmann/aerospace-swipe), built locally
+config/aerospace/aerospace-swipe/
