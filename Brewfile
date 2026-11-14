@@ -9,6 +9,7 @@ tap "crmne/tap"
 tap "dlvhdr/formulae"
 tap "grafana/grafana"
 tap "hashicorp/tap"
+tap "hero-persson/unmojang"
 tap "jesseduffield/lazygit"
 tap "jvm/tap"
 tap "mediosz/tap"
@@ -165,6 +166,7 @@ brew "img2pdf"
 brew "pngpaste"
 cask "font-inconsolata"
 cask "font-libertinus-sans"
+cask "font-press-start-2p"
 
 # AI and audio
 cask "ollama-app"
@@ -189,6 +191,7 @@ brew "terminal-notifier"
 cask "android-platform-tools"
 
 # Fun
+cask "hero-persson/unmojang/fjordlauncher", trusted: true
 brew "asciiquarium"
 brew "cbonsai"
 brew "cmatrix"
