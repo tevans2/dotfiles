@@ -18,9 +18,14 @@ switch:
 update:
     nix flake update && just switch
 
-# Install everything in the Brewfile
+# Install what's in the Brewfile but missing (no upgrades: fast)
 brew:
-    brew bundle --file=Brewfile
+    brew bundle --file=Brewfile --no-upgrade
+
+# Upgrade all Homebrew apps and tools (can take a while: it downloads everything new at once)
+upgrade:
+    brew update
+    brew upgrade
 
 # What's installed but not in the Brewfile (dry run); add --force to uninstall it
 brew-cleanup *flags:

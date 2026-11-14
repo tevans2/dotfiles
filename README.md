@@ -38,6 +38,6 @@ It installs Nix, runs home-manager (links + command-line tools), installs Homebr
 
 ## Apps (Homebrew)
 
-`Brewfile` lists what should be installed. `just brew` installs it; `just brew-cleanup` shows what's installed but not listed (`--force` removes it). Add an app by adding a line, not just `brew install`, or the next cleanup removes it.
+`Brewfile` lists what should be installed. `just brew` installs anything missing (no upgrades), `just upgrade` updates everything; `just brew-cleanup` shows what's installed but not listed (`--force` removes it). Add an app by adding a line, not just `brew install`, or the next cleanup removes it.
 
 Secrets never live here: `config/zsh/.zsh/secrets.zsh` only looks keys up (Keychain / Doppler). The gitleaks pre-commit hook checks every commit (`just setup` once per clone).
