@@ -48,3 +48,6 @@ export TF_CLI_CONFIG_FILE="$XDG_CONFIG_HOME/terraform/credentials.tfrc.json"
 
 # home-manager session variables (Linux hosts)
 [[ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]] && . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+
+# Homebrew: no "Hide these hints with HOMEBREW_NO_ENV_HINTS" tips after commands
+export HOMEBREW_NO_ENV_HINTS=1
