@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""Find and trash duplicate Bitwarden logins (e.g. after importing from Chrome/Arc).
+
+Usage (after `bw login` and `export BW_SESSION="$(bw unlock --raw)"`):
+  bw-dedupe            dry run: shows what it would do, changes nothing
+  bw-dedupe --apply    moves the safe duplicates to Bitwarden's trash (restorable for 30 days)
+
+Two logins are duplicates when site, username and password all match.
+In each group one item is kept: the one with the most information (notes, custom fields,
+TOTP, more URLs, favourite, in a folder), then the oldest. A duplicate is only trashed if it
+adds nothing the keeper lacks; otherwise the group is listed for you to merge by hand.
+Same site + username with *different* passwords are listed as conflicts, never touched.
+Passwords are never printed.
+"""
+import json, os, subprocess, sys
+from collections import defaultdict
+from urllib.parse import urlparse
+
+APPLY = "--apply" in sys.argv
+
+
+def bw(*args):
+    r = subprocess.run(["bw", *args], capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit(f"bw {' '.join(args)} failed: {r.stderr.strip()}")
+    return r.stdout
+
+
+def host(uri):
+    if not uri:
+        return ""
+    if "://" not in uri:
+        uri = "https://" + uri
+    p = urlparse(uri)
+    if p.scheme not in ("http", "https"):
+        return uri.lower()  # androidapp://…, etc.
+    h = (p.hostname or "").lower()
+    return h[4:] if h.startswith("www.") else h
+
+
+def hosts(item):
+    return {host(u.get("uri")) for u in (item.get("login") or {}).get("uris") or []} - {""}
+
+
+def extras(item):
+    """What an item carries besides site/username/password."""
+    login = item.get("login") or {}
+    return {
+        "notes": (item.get("notes") or "").strip(),
+        "fields": tuple(sorted((f.get("name") or "", f.get("value") or "") for f in item.get("fields") or [])),
+        "totp": login.get("totp") or "",
+        "hosts": hosts(item),
+    }
+
+
+def score(item):
+    e = extras(item)
+    return (bool(e["notes"]), len(e["fields"]), bool(e["totp"]), len(e["hosts"]),
+            bool(item.get("favorite")), bool(item.get("folderId")))
+
+
+def adds_something(dup, keep):
+    d, k = extras(dup), extras(keep)
+    return (d["notes"] and d["notes"] != k["notes"]) or (set(d["fields"]) - set(k["fields"])) \
+        or (d["totp"] and d["totp"] != k["totp"]) or (d["hosts"] - k["hosts"])
+
+
+def label(item, folders):
+    login = item.get("login") or {}
+    site = ", ".join(sorted(hosts(item))) or "(no URL)"
+    return f"{item.get('name')!r:40.40} {login.get('username') or '':30.30} {site:35.35} [{folders.get(item.get('folderId'), 'No folder')}]"
+
+
+def main():
+    if not os.environ.get("BW_SESSION"):
+        sys.exit('Unlock first: export BW_SESSION="$(bw unlock --raw)"')
+    bw("sync")
+    items = json.loads(bw("list", "items"))
+    folders = {f["id"]: f["name"] for f in json.loads(bw("list", "folders")) if f.get("id")}
+    logins = [i for i in items if i.get("type") == 1]
+
+    groups, by_account = defaultdict(list), defaultdict(set)
+    for i in logins:
+        login = i.get("login") or {}
+        uris = [host(u.get("uri")) for u in login.get("uris") or []]
+        site = next((h for h in uris if h), "") or (i.get("name") or "").strip().lower()  # main (first) URL
+        user = (login.get("username") or "").strip().lower()
+        groups[(site, user, login.get("password") or "")].append(i)
+        by_account[(site, user)].add(login.get("password") or "")
+
+    to_trash, review = [], []
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        members.sort(key=lambda i: (score(i), [-ord(c) for c in (i.get("creationDate") or "")]), reverse=True)
+        keep = members[0]
+        for dup in members[1:]:
+            (review if adds_something(dup, keep) else to_trash).append((dup, keep))
+
+    conflicts = [k for k, pw in by_account.items() if len(pw) > 1 and k[1]]
+
+    print(f"{len(items)} items, {len(logins)} logins, {sum(1 for g in groups.values() if len(g) > 1)} duplicate groups\n")
+    print(f"== Safe to trash: {len(to_trash)}")
+    for dup, _ in to_trash:
+        print("  ", label(dup, folders))
+    print(f"\n== Duplicates that add something (merge by hand, not touched): {len(review)}")
+    for dup, keep in review:
+        print("   dup: ", label(dup, folders))
+        print("   keep:", label(keep, folders))
+    print(f"\n== Same site + username, different passwords (check which is current, not touched): {len(conflicts)}")
+    for site, user in sorted(conflicts):
+        print(f"   {site:35.35} {user}")
+
+    if not APPLY:
+        print("\nDry run. Run `bw-dedupe --apply` to move the safe ones to the trash.")
+        return
+    for n, (dup, _) in enumerate(to_trash, 1):
+        bw("delete", "item", dup["id"])  # soft delete: Bitwarden trash, 30 days
+        print(f"\rtrashed {n}/{len(to_trash)}", end="", flush=True)
+    bw("sync")
+    print("\nDone. Restore from Bitwarden → Trash if anything was wrong (30 days).")
+
+
+if __name__ == "__main__":
+    main()
