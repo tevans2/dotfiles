@@ -6,6 +6,7 @@ tap "ardia-browser/tap", "https://github.com/ardia-browser/homebrew-tap.git"
 tap "asmvik/formulae", "https://github.com/asmvik/homebrew-formulae.git"
 tap "caarlos0/tap"
 tap "crmne/tap"
+tap "dicklesworthstone/tap"
 tap "dlvhdr/formulae"
 tap "grafana/grafana"
 tap "hashicorp/tap"
@@ -170,6 +171,7 @@ cask "font-press-start-2p"
 
 # AI and audio
 cask "ollama-app"
+brew "dicklesworthstone/tap/cass", trusted: true # agent history search; its archive is backed up nightly (agent-history-backup)
 brew "whisper.cpp"
 brew "sentencepiece"
 brew "espeak-ng"
