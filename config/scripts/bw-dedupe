@@ -14,7 +14,7 @@ adds nothing the keeper lacks; otherwise the group is listed for you to merge by
 Same site + username with *different* passwords are listed as conflicts, never touched.
 Passwords are never printed.
 """
-import json, os, subprocess, sys
+import json, os, subprocess, sys, time
 from collections import defaultdict
 from urllib.parse import urlparse
 
@@ -27,6 +27,18 @@ def bw(*args):
     if r.returncode != 0:
         sys.exit(f"bw {' '.join(args)} failed: {r.stderr.strip()}")
     return r.stdout
+
+
+def trash(item_id):
+    """Soft-delete with retries: the API sometimes drops a request when many are sent quickly."""
+    for attempt in range(4):
+        r = subprocess.run(["bw", "delete", "item", item_id], capture_output=True, text=True)
+        if r.returncode == 0:
+            time.sleep(0.3)  # stay under the API's rate limit
+            return True
+        time.sleep(2 ** attempt * 2)  # 2, 4, 8, 16 s
+    print(f"\n  could not trash {item_id}: {r.stderr.strip()[:120]}")
+    return False
 
 
 def host(uri):
@@ -122,8 +134,7 @@ def resolve(conflicts, accounts, folders):
         for k, (p, its) in enumerate(options, 1):
             if k != int(ans):
                 for i in its:
-                    bw("delete", "item", i["id"])
-                    trashed += 1
+                    trashed += trash(i["id"])
         print(f"  kept {ans}")
     bw("sync")
     print(f"\nTrashed {trashed} item(s). Restore from Bitwarden → Trash within 30 days if needed.")
@@ -177,11 +188,12 @@ def main():
     if not APPLY:
         print("\nDry run. `bw-dedupe --apply` trashes the safe ones; `bw-dedupe --resolve` walks through the conflicts.")
         return
+    failed = 0
     for n, (dup, _) in enumerate(to_trash, 1):
-        bw("delete", "item", dup["id"])  # soft delete: Bitwarden trash, 30 days
-        print(f"\rtrashed {n}/{len(to_trash)}", end="", flush=True)
+        failed += not trash(dup["id"])  # soft delete: Bitwarden trash, 30 days
+        print(f"\rtrashed {n - failed}/{len(to_trash)}", end="", flush=True)
     bw("sync")
-    print("\nDone. Restore from Bitwarden → Trash if anything was wrong (30 days).")
+    print(f"\nDone{f', {failed} failed (rerun to retry them)' if failed else ''}. Restore from Bitwarden → Trash within 30 days if needed.")
 
 
 if __name__ == "__main__":
