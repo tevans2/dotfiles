@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+# storage: see where disk space goes, track it over time, and clean the known hogs.
+#
+#   storage                 free space + tracked locations (from the last scan) + growth
+#   storage scan            measure every tracked location and append it to the history
+#   storage history [name]  how each location (or one) has changed across scans
+#   storage clean [name..]  dry run of the safe cleanups; add --yes to actually run them
+#   storage stale [days]    node_modules/.venv/target/... under ~/Developer untouched for N days (default 60)
+#   storage top [path]      interactive drill-down (ncdu), default $HOME
+#   storage check           notify if free space is below STORAGE_MIN_FREE_GB (default 20)
+#   storage agent install|uninstall   daily scan + check via launchd
+#
+# History lives in ${XDG_STATE_HOME:-~/.local/state}/storage/history.tsv (epoch, date, name, KiB).
+# Machine-specific extra locations: ~/.config/storage/paths, lines of "name|path|description".
+
+set -uo pipefail
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/storage"
+HISTORY="$STATE_DIR/history.tsv"
+EXTRA_PATHS="${XDG_CONFIG_HOME:-$HOME/.config}/storage/paths"
+MIN_FREE_GB="${STORAGE_MIN_FREE_GB:-20}"
+DEV_DIR="${STORAGE_DEV_DIR:-$HOME/Developer}"
+AGENT_LABEL="com.tate.storage"
+AGENT_PLIST="$HOME/Library/LaunchAgents/$AGENT_LABEL.plist"
+
+VARF="$(dirname "${TMPDIR:-/tmp/x}")"   # /var/folders/xx/yyyy  (T = $TMPDIR, C = caches, X = code-sign clones)
+TMPD="${TMPDIR%/}"
+
+if [[ -t 1 ]]; then B=$'\e[1m' D=$'\e[2m' R=$'\e[31m' G=$'\e[32m' Y=$'\e[33m' N=$'\e[0m'; else B= D= R= G= Y= N=; fi
+
+# ---------------------------------------------------------------- tracked locations
+# name|path|description.  Cleanable ones have a clean_<name> function below.
+locations() {
+  cat <<EOF
+chrome-clones|$VARF/X/com.google.Chrome.code_sign_clone|Chrome update leftovers (known macOS bug, grows ~1.4G each)
+tmp|$TMPD|per-user temp dir (\$TMPDIR)
+var-caches|$VARF/C|per-user system caches
+trash|$HOME/.Trash|Trash
+downloads|$HOME/Downloads|Downloads
+developer|$DEV_DIR|code (see: storage stale)
+orbstack|$HOME/Library/Group Containers/HUAQ24HBR6.dev.orbstack|OrbStack/Docker images + volumes
+uv|$HOME/.cache/uv|uv package cache
+huggingface|$HOME/.cache/huggingface|Hugging Face models/datasets
+pip|$HOME/Library/Caches/pip|pip cache
+npm|$HOME/.npm|npm cache
+bun|$HOME/.bun/install/cache|bun cache
+homebrew|$HOME/Library/Caches/Homebrew|Homebrew downloads
+go-build|$HOME/Library/Caches/go-build|Go build cache
+cargo|$HOME/.cargo/registry|cargo registry
+xcode-derived|$HOME/Library/Developer/Xcode/DerivedData|Xcode build products
+playwright|$HOME/Library/Caches/ms-playwright|Playwright browsers
+ollama|$HOME/.ollama|Ollama models
+nvm|$HOME/.nvm|Node versions (nvm)
+venvs|$HOME/.venvs|shared virtualenvs
+local-share|$HOME/.local/share|tool installs (claude, nvim, rustup, stack...)
+app-support|$HOME/Library/Application Support|app data
+library-caches|$HOME/Library/Caches|app caches
+icloud|$HOME/Library/Mobile Documents|iCloud Drive (local copies)
+claude|$HOME/.claude|Claude Code state
+applications|/Applications|apps
+EOF
+  [[ -r $EXTRA_PATHS ]] && grep -v '^\s*#' "$EXTRA_PATHS" | grep '|'
+}
+
+# ---------------------------------------------------------------- helpers
+human() { # KiB -> human
+  awk -v k="${1:-0}" 'BEGIN{ s=(k<0)?"-":""; k=(k<0)?-k:k; split("K M G T",u," "); i=1
+    while (k>=1024 && i<4){k/=1024;i++}; printf (k>=10||i==1)?"%s%.0f%s":"%s%.1f%s", s,k,u[i] }'
+}
+size_kb() { [[ -e $1 ]] && du -skx "$1" 2>/dev/null | awk '{print $1}' || echo 0; }
+free_kb() { df -k "$HOME" | awk 'NR==2{print $4}'; }
+total_kb() { df -k "$HOME" | awk 'NR==2{print $2}'; }
+have() { command -v "$1" >/dev/null 2>&1; }
+running() { pgrep -xq "$1"; }
+
+free_line() {
+  local f t; f=$(free_kb); t=$(total_kb)
+  local pct=$(( 100 - f * 100 / t )) col=$G
+  (( f < MIN_FREE_GB * 1024 * 1024 )) && col=$R
+  (( f >= MIN_FREE_GB * 1024 * 1024 && f < 2 * MIN_FREE_GB * 1024 * 1024 )) && col=$Y
+  printf '%sFree: %s%s%s of %s (%d%% used, warn below %sG)%s\n' "$B" "$col" "$(human "$f")" "$N$B" "$(human "$t")" "$pct" "$MIN_FREE_GB" "$N"
+}
+
+# ---------------------------------------------------------------- scan / report
+cmd_scan() {
+  local quiet=${1:-}
+  mkdir -p "$STATE_DIR"
+  local now; now="$(date +%s)	$(date '+%Y-%m-%d %H:%M')"
+  printf '%s\t_free\t%s\n' "$now" "$(free_kb)" >>"$HISTORY"
+  while IFS='|' read -r name path _; do
+    [[ -z $name ]] && continue
+    [[ -z $quiet ]] && printf '%s  measuring %-16s%s\r' "$D" "$name" "$N" >&2
+    printf '%s\t%s\t%s\n' "$now" "$name" "$(size_kb "$path")" >>"$HISTORY"
+  done < <(locations)
+  [[ -z $quiet ]] && { printf '\e[K' >&2; cmd_report; }
+}
+
+cmd_report() {
+  free_line
+  if [[ ! -s $HISTORY ]]; then echo "No scans yet: run ${B}storage scan${N}"; return; fi
+  # last scan, previous scan, and the scan closest to 30 days ago
+  awk -F'\t' -v B="$B" -v D="$D" -v R="$R" -v G="$G" -v N="$N" '
+    function h(k,  s,i,u){ s=(k<0)?"-":""; k=(k<0)?-k:k; split("K M G T",u," "); i=1
+      while(k>=1024&&i<4){k/=1024;i++}; return sprintf((k>=10||i==1)?"%s%.0f%s":"%s%.1f%s",s,k,u[i]) }
+    function d(x){ if (x=="") return D"     -"N; if (x> 512*1024) return R sprintf("%7s","+"h(x)) N
+                   if (x< -512*1024) return G sprintf("%7s",h(x)) N; return D sprintf("%7s",(x>=0?"+":"")h(x)) N }
+    { ts[$1]=1; when[$1]=$2; v[$1,$3]=$4; if(!($3 in seen)){seen[$3]=1; names[++n]=$3} }
+    END{
+      m=0; for(t in ts) times[++m]=t+0
+      for(i=1;i<=m;i++) for(j=i+1;j<=m;j++) if(times[j]<times[i]){x=times[i];times[i]=times[j];times[j]=x}
+      last=times[m]; prev=(m>1)?times[m-1]:""; month=""; best=1e18
+      for(i=1;i<m;i++){ dd=times[i]-(last-30*86400); dd=(dd<0)?-dd:dd; if(dd<best){best=dd;month=times[i]} }
+      printf "%sLast scan %s%s\n\n", D, when[last], N
+      printf "%s%-16s %8s %8s %8s%s\n", B, "location", "size", "Δprev", "Δ~30d", N
+      # sort by size desc
+      k=0; for(i=1;i<=n;i++){ nm=names[i]; if(nm=="_free"||!((last,nm) in v)) continue; order[++k]=nm }
+      for(i=1;i<=k;i++) for(j=i+1;j<=k;j++) if(v[last,order[j]]+0>v[last,order[i]]+0){x=order[i];order[i]=order[j];order[j]=x}
+      for(i=1;i<=k;i++){ nm=order[i]; s=v[last,nm]
+        dp=(prev!=""&&(prev,nm) in v)?s-v[prev,nm]:""; dm=(month!=""&&(month,nm) in v)?s-v[month,nm]:""
+        printf "%-16s %8s %s  %s\n", nm, h(s), d(dp), d(dm) }
+    }' "$HISTORY"
+  echo
+  echo "${D}storage clean    – see what can be freed   |   storage stale – old build dirs   |   storage scan – refresh${N}"
+}
+
+cmd_history() {
+  local want=${1:-_free}
+  [[ -s $HISTORY ]] || { echo "No scans yet"; return 1; }
+  awk -F'\t' -v w="$want" '
+    function h(k,  s,i,u){ s=(k<0)?"-":""; k=(k<0)?-k:k; split("K M G T",u," "); i=1
+      while(k>=1024&&i<4){k/=1024;i++}; return sprintf((k>=10||i==1)?"%s%.0f%s":"%s%.1f%s",s,k,u[i]) }
+    $3==w { printf "%s  %8s  %8s\n", $2, h($4), (p=="")?"":(($4>=p)?"+":"") h($4-p); p=$4 }' "$HISTORY"
+}
+
+# ---------------------------------------------------------------- cleaners
+# Each clean_<name> prints what it would do; with DO=1 it does it.
+DO=0
+run() { if (( DO )); then echo "  ${Y}\$ $*${N}"; "$@"; else echo "  ${D}would run: $*${N}"; fi; }
+rm_paths() { # rm -rf each arg, reporting total
+  local kb=0 p; for p in "$@"; do kb=$(( kb + $(size_kb "$p") )); done
+  (( $# )) || { echo "  nothing to remove"; return; }
+  echo "  $# item(s), $(human $kb)"
+  if (( DO )); then rm -rf "$@"; echo "  ${G}removed${N}"; else printf '  %swould remove: %s%s\n' "$D" "$(printf '%s ' "${@##*/}" | cut -c1-200)" "$N"; fi
+}
+
+clean_chrome-clones() {
+  local dir="$VARF/X/com.google.Chrome.code_sign_clone"; [[ -d $dir ]] || { echo "  none"; return; }
+  local items=()
+  if running "Google Chrome"; then
+    # Chrome uses its newest clone; keep that one
+    while IFS= read -r p; do items+=("$p"); done < <(ls -1dt "$dir"/code_sign_clone.* 2>/dev/null | tail -n +2)
+    echo "  ${D}Chrome is running: keeping the newest clone${N}"
+  else
+    while IFS= read -r p; do items+=("$p"); done < <(ls -1d "$dir"/code_sign_clone.* 2>/dev/null)
+  fi
+  rm_paths ${items[@]+"${items[@]}"}
+}
+clean_tmp() { # stale (>2 days) known build/temp leftovers in $TMPDIR
+  local items=()
+  while IFS= read -r p; do items+=("$p"); done < <(find "$TMPD" -maxdepth 1 -mtime +2 \( \
+      -name 'remotion-*' -o -name 'TestScratchPath*' -o -name '*.ShipIt.*' -o -name 'playwright*' \
+      -o -name 'tmp*' -o -name 'go-build*' -o -name 'pip-*' -o -name 'uv-*' -o -name 'node-compile-cache' \) 2>/dev/null)
+  rm_paths ${items[@]+"${items[@]}"}
+}
+clean_trash() {
+  echo "  $(human "$(size_kb "$HOME/.Trash")") in Trash"
+  if (( DO )); then osascript -e 'tell application "Finder" to empty trash' >/dev/null 2>&1 || rm -rf "$HOME/.Trash/"* "$HOME/.Trash/".[!.]* 2>/dev/null; echo "  ${G}emptied${N}"
+  else echo "  ${D}would empty the Trash${N}"; fi
+}
+clean_uv()        { have uv   && run uv cache prune; }
+clean_npm()       { have npm  && run npm cache clean --force; }
+clean_bun()       { have bun  && run bun pm cache rm; }
+clean_pip()       { [[ -d $HOME/Library/Caches/pip ]] && rm_paths "$HOME/Library/Caches/pip"; }
+clean_homebrew()  { have brew && run brew cleanup --prune=all -s; }
+clean_go-build()  { have go   && run go clean -cache; }
+clean_xcode-derived() { [[ -d $HOME/Library/Developer/Xcode/DerivedData ]] && rm_paths "$HOME/Library/Developer/Xcode/DerivedData"/*; }
+clean_orbstack()  { have docker && { docker system df 2>/dev/null; run docker system prune -f; }; }
+clean_nvm() { # node versions other than the default alias
+  [[ -d $HOME/.nvm/versions/node ]] || return
+  local def; def=$(cat "$HOME/.nvm/alias/default" 2>/dev/null)
+  echo "  ${D}default alias: ${def:-none}; others are listed, remove with: nvm uninstall <v>${N}"
+  ls -1 "$HOME/.nvm/versions/node" | grep -v "^v\?${def#v}" | sed 's/^/    /'
+}
+clean_local-share() { # superseded Claude Code / cursor-agent versions
+  local items=() d
+  for d in "$HOME/.local/share/claude/versions" "$HOME/.local/share/cursor-agent/versions"; do
+    [[ -d $d ]] || continue
+    while IFS= read -r p; do items+=("$p"); done < <(ls -1dt "$d"/* 2>/dev/null | tail -n +3)  # keep newest two
+  done
+  rm_paths ${items[@]+"${items[@]}"}
+}
+
+CLEAN_DEFAULT=(chrome-clones tmp trash uv npm bun pip homebrew go-build xcode-derived local-share)
+CLEAN_ALL=("${CLEAN_DEFAULT[@]}" orbstack nvm)
+
+cmd_clean() {
+  local targets=() a
+  for a in "$@"; do case $a in -y|--yes) DO=1 ;; *) targets+=("$a") ;; esac; done
+  (( ${#targets[@]} )) || targets=("${CLEAN_DEFAULT[@]}")
+  [[ ${targets[0]} == all ]] && targets=("${CLEAN_ALL[@]}")
+  local before; before=$(free_kb)
+  (( DO )) || echo "${Y}Dry run${N}: nothing is deleted. Re-run with ${B}--yes${N} (optionally naming targets) to clean."
+  echo "${D}Targets: ${CLEAN_ALL[*]}  (orbstack/nvm only when named or 'all')${N}"
+  for a in "${targets[@]}"; do
+    if ! declare -F "clean_$a" >/dev/null; then echo "${R}unknown target: $a${N}"; continue; fi
+    echo "${B}$a${N}"
+    "clean_$a" || echo "  ${D}skipped (tool not installed / nothing there)${N}"
+  done
+  if (( DO )); then echo; echo "Freed $(human $(( $(free_kb) - before )))"; free_line; fi
+}
+
+# ---------------------------------------------------------------- stale build dirs
+cmd_stale() {
+  local days=${1:-60} del=0
+  [[ ${2:-} == --yes || ${1:-} == --yes ]] && del=1
+  [[ $days == --yes ]] && days=60
+  echo "${B}Build/dependency dirs under ${DEV_DIR/#$HOME/~} whose project hasn't been touched in ${days}+ days${N}"
+  local total=0 list=()
+  while IFS= read -r dir; do
+    local proj; proj=$(dirname "$dir")
+    # judge staleness by the project's own files, not the artifact dir
+    if [[ -z $(find "$proj" -maxdepth 2 -mtime -"$days" -not -path "$dir*" -not -path '*/.git/*' -print -quit 2>/dev/null) ]]; then
+      local kb; kb=$(size_kb "$dir"); total=$(( total + kb )); list+=("$dir")
+      printf '%8s  %s\n' "$(human "$kb")" "${dir/#$HOME/~}"
+    fi
+  done < <(find "$DEV_DIR" \( -name node_modules -o -name .venv -o -name venv -o -name target -o -name .next \
+             -o -name .aws-sam -o -name .turbo -o -name .gradle \) -type d -prune 2>/dev/null \
+           | grep -v '/node_modules/.*/' )
+  echo "${B}Total: $(human $total)${N}  ${D}(all regenerable: npm i / uv sync / cargo build)${N}"
+  if (( del )) && (( ${#list[@]} )); then rm -rf "${list[@]}"; echo "${G}removed${N}"
+  elif (( ${#list[@]} )); then echo "${D}Delete them with: storage stale $days --yes${N}"; fi
+}
+
+# ---------------------------------------------------------------- check / agent
+cmd_check() {
+  local f; f=$(free_kb)
+  if (( f < MIN_FREE_GB * 1024 * 1024 )); then
+    local msg="Only $(human "$f") free. Run: storage clean"
+    osascript -e "display notification \"$msg\" with title \"Disk space low\" sound name \"Basso\"" 2>/dev/null
+    echo "$msg"; return 1
+  fi
+}
+
+cmd_agent() {
+  case ${1:-} in
+    install)
+      mkdir -p "$(dirname "$AGENT_PLIST")" "$STATE_DIR"
+      cat >"$AGENT_PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$AGENT_LABEL</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string><string>-c</string>
+    <string>"$HOME/.config/scripts/storage" scan --quiet; "$HOME/.config/scripts/storage" check</string>
+  </array>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>30</integer></dict>
+  <key>StandardOutPath</key><string>$STATE_DIR/agent.log</string>
+  <key>StandardErrorPath</key><string>$STATE_DIR/agent.log</string>
+  <key>LowPriorityIO</key><true/>
+  <key>Nice</key><integer>10</integer>
+</dict></plist>
+EOF
+      launchctl bootout "gui/$(id -u)/$AGENT_LABEL" 2>/dev/null
+      launchctl bootstrap "gui/$(id -u)" "$AGENT_PLIST" && echo "Installed: daily scan + low-space check at 12:30 (missed runs fire on wake)" ;;
+    uninstall)
+      launchctl bootout "gui/$(id -u)/$AGENT_LABEL" 2>/dev/null; rm -f "$AGENT_PLIST"; echo "Removed" ;;
+    *) launchctl print "gui/$(id -u)/$AGENT_LABEL" >/dev/null 2>&1 && echo "agent: installed" || echo "agent: not installed (storage agent install)" ;;
+  esac
+}
+
+cmd_top() {
+  local p=${1:-$HOME}
+  if have gdu; then gdu "$p"; elif have ncdu; then ncdu -x "$p"; else du -xhd1 "$p" 2>/dev/null | sort -hr | head -25; fi
+}
+
+case ${1:-report} in
+  report|"") cmd_report ;;
+  scan)      cmd_scan "${2:-}" ;;
+  history)   cmd_history "${2:-}" ;;
+  clean)     shift; cmd_clean "$@" ;;
+  stale)     shift; cmd_stale "$@" ;;
+  top)       cmd_top "${2:-}" ;;
+  check)     cmd_check ;;
+  agent)     cmd_agent "${2:-}" ;;
+  -h|--help|help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "unknown command: $1 (storage help)"; exit 2 ;;
+esac
