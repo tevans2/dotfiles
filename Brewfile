@@ -1,4 +1,4 @@
-# Mac apps and Mac-only tools. Command-line tools that run on both machines are in home/packages.nix (Nix).
+# Mac apps and Mac-only tools. Entries from third-party taps need `trusted: true` (Homebrew tap trust). Command-line tools that run on both machines are in home/packages.nix (Nix).
 # Install: `just brew`. Remove anything not listed here: `just brew-cleanup` (dry run), then `just brew-cleanup --force`.
 
 # Taps (third-party sources)
@@ -26,7 +26,7 @@ tap "webstonehq/tap"
 
 # Window management and input
 cask "raycast"
-cask "nikitabobko/tap/aerospace"
+cask "nikitabobko/tap/aerospace", trusted: true
 cask "alt-tab"
 cask "jordanbaird-ice"
 cask "karabiner-elements"
@@ -50,7 +50,7 @@ cask "deckcraft"
 cask "gridcraft"
 cask "photocraft"
 cask "google-earth-pro"
-cask "mantrakp04/tap/ardia"
+cask "mantrakp04/tap/ardia", trusted: true
 cask "sioyek"
 brew "mpv"
 cask "crmne/tap/spotifast", trusted: true
@@ -163,7 +163,6 @@ cask "font-libertinus-sans"
 
 # AI and audio
 cask "ollama-app"
-brew "codex"
 brew "whisper.cpp"
 brew "sentencepiece"
 brew "espeak-ng"
