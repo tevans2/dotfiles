@@ -188,6 +188,11 @@ brew "mole"
 brew "terminal-notifier"
 cask "android-platform-tools"
 
+# Fun
+brew "asciiquarium"
+brew "cbonsai"
+brew "cmatrix"
+
 # Libraries and media tools (installed on request)
 brew "ncurses"
 brew "cairo"
