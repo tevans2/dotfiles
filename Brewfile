@@ -45,6 +45,7 @@ cask "wordcraft"
 cask "deckcraft"
 cask "gridcraft"
 cask "photocraft"
+cask "blender"
 cask "google-earth-pro"
 cask "mantrakp04/tap/ardia", trusted: true
 cask "sioyek"
@@ -104,7 +105,6 @@ brew "dlvhdr/formulae/diffnav", trusted: true
 brew "jvm/tap/git-dash", trusted: true
 brew "schpet/tap/linear", trusted: true
 brew "microsoft/mssql-release/msodbcsql17", trusted: true
-brew "microsoft/mssql-release/mssql-tools", trusted: true
 cask "dbeaver-community"
 cask "r-app"
 brew "go"
