@@ -167,7 +167,6 @@ cask "font-inconsolata"
 cask "font-libertinus-sans"
 
 # AI and audio
-cask "codex"
 cask "ollama-app"
 brew "whisper.cpp"
 brew "sentencepiece"
