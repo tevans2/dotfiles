@@ -16,7 +16,9 @@ SSH="ssh -i $HOME/.ssh/agent-history -o IdentitiesOnly=yes -o BatchMode=yes -o C
 CASS="$HOME/.local/share/coding-agent-search"
 STAGE="$HOME/.cache/agent-history"
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
-push() { rsync -a --mkpath -e "$SSH" "$@"; }   # never --delete (the server refuses it anyway)
+RSYNC="$HOME/.nix-profile/bin/rsync"   # GNU rsync from home/darwin.nix; macOS's /usr/bin/rsync (openrsync) lacks --mkpath and daemon mode
+[ -x "$RSYNC" ] || { echo "agent-history-backup: $RSYNC missing; run 'just switch' in ~/dotfiles" >&2; exit 1; }
+push() { "$RSYNC" -a --mkpath -e "$SSH" "$@"; }   # never --delete (the server refuses it anyway)
 fail=0
 
 log "start"
