@@ -35,7 +35,6 @@ alias study="~/tools/study.sh"
 alias venv="source .venv/bin/activate"
 alias md2pdf="$HOME/Developer/md2pdf/.venv/bin/md2pdf"
 if [[ $OSTYPE == darwin* ]]; then
-  alias zathura='open -a "$HOME/Applications/Zathura.app"'
   alias ql='shortcuts run "quick look" -i'
   alias gcc='gcc-15'   # Homebrew GCC, not Apple clang
 fi

@@ -22,10 +22,10 @@ tap "openclaw/tap"
 tap "schpet/tap"
 tap "steipete/tap"
 tap "tevans2/tilde", trusted: { casks: ["tilde"] }
-tap "vdavid/tap"
 tap "webstonehq/tap"
 
 # Window management and input
+cask "raycast"
 cask "nikitabobko/tap/aerospace"
 cask "alt-tab"
 cask "jordanbaird-ice"
@@ -35,37 +35,46 @@ brew "switchaudio-osx"
 brew "cliclick"
 
 # Terminal and editors
+cask "kitty"
+cask "obsidian"
 cask "ghostty"
 cask "markedit"
 cask "zed"
 
 # Browsing, reading, media
+cask "spotify"
+cask "stremio"
+cask "filmcraft"
+cask "photocraft"
+cask "google-earth-pro"
 cask "mantrakp04/tap/ardia"
-cask "librewolf"
 cask "sioyek"
 brew "mpv"
 cask "crmne/tap/spotifast", trusted: true
 brew "nowplaying-cli"
-cask "background-music"
 
 # Messaging, sharing, security
+cask "tailscale-app"
+cask "microsoft-teams"
 cask "telegram"
 cask "crmne/tap/zapfast", trusted: true
 cask "bitwarden"
 cask "localsend"
 
 # Productivity
+cask "tevans2/tilde/tilde"
+cask "google-drive"
+cask "syncthing-app"
 cask "activitywatch"
-cask "handy"
-cask "mindwtr"
 cask "openclaw/tap/goplaces", trusted: true
-cask "vdavid/tap/cmdr", trusted: true
 brew "gcalcli"
 brew "hledger"
 brew "webstonehq/tap/tuxedo", trusted: true
 brew "emeraldian"
 
 # Containers, cloud, network
+cask "tunnelblick"
+cask "postman-agent"
 cask "orbstack"
 cask "ngrok"
 brew "awscli"
@@ -88,6 +97,8 @@ brew "ddgr"
 brew "w3m"
 
 # Languages and dev tools
+cask "dbeaver-community"
+cask "r-app"
 brew "go"
 brew "nvm"
 brew "openjdk@21"
@@ -148,8 +159,8 @@ cask "font-inconsolata"
 cask "font-libertinus-sans"
 
 # AI and audio
+cask "ollama-app"
 brew "codex"
-brew "ollama"
 brew "whisper.cpp"
 brew "sentencepiece"
 brew "espeak-ng"
@@ -162,7 +173,10 @@ brew "py3cairo"
 # Agents (on hold with the old thinker setup)
 brew "herdr"
 
-# Mac upkeep
+# Mac upkeep (and App Store apps via mas)
+cask "displaylink"
+brew "mas"
+mas "Amphetamine", id: 937984704
 brew "mole"
 brew "terminal-notifier"
 cask "android-platform-tools"

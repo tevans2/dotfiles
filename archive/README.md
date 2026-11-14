@@ -22,3 +22,5 @@ To bring one back, move it out of `archive/` and link it again (stow on the Mac,
 | leechblock | LeechBlock (site blocker) settings export |
 | zathura | PDF viewer |
 | spotify_player | Terminal Spotify client |
+| librewolf | LibreWolf browser config (user.js, chrome CSS, profile linker); app removed 2026-11-14 |
+| zathura launcher alias | removed 2026-11-14 with the app |

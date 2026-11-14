@@ -9,7 +9,7 @@ config/<app>/   the config files themselves; linked live, so edits need no rebui
 home/
   common.nix    both machines: which configs are linked where, git settings
   packages.nix  command-line tools, both machines (Homebrew only for apps and Mac-only tools)
-  darwin.nix    Mac only: AeroSpace, Ghostty, kitty, sioyek, ~/.librewolf, Keychain, diffnav
+  darwin.nix    Mac only: AeroSpace, Ghostty, kitty, sioyek configs; Mac-only CLI tools (bw); Keychain, diffnav
   linux.nix     Linux only: what nvim needs to build plugins
 flake.nix       homeModules (used by the homelab repo for thinker) + homeConfigurations."tate@mac"
 Brewfile        Mac apps and Mac-only tools (Homebrew)

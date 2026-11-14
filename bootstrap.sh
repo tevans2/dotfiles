@@ -33,6 +33,5 @@ Done. By hand, once:
   - open a new terminal (zsh, prompt and tools load from ~/dotfiles)
   - sign in: Bitwarden, then Tailscale, GitHub (`gh auth login`), Doppler (`doppler login`)
   - copy the sops age key from Bitwarden to ~/.config/sops/age/keys.txt (homelab secrets)
-  - open LibreWolf once, then run config/librewolf/link-profile.sh
   - Karabiner: copy config/karabiner/karabiner.json to ~/.config/karabiner/
 NEXT
