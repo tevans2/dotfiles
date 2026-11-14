@@ -4,6 +4,8 @@
 Usage (after `bw login` and `export BW_SESSION="$(bw unlock --raw)"`):
   bw-dedupe            dry run: shows what it would do, changes nothing
   bw-dedupe --apply    moves the safe duplicates to Bitwarden's trash (restorable for 30 days)
+  bw-dedupe --resolve  walks through same-site/username logins with different passwords, one at a
+                       time: shows the evidence, suggests the current one, trashes the others you reject
 
 Two logins are duplicates when site, username and password all match.
 In each group one item is kept: the one with the most information (notes, custom fields,
@@ -17,6 +19,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 APPLY = "--apply" in sys.argv
+RESOLVE = "--resolve" in sys.argv
 
 
 def bw(*args):
@@ -71,6 +74,61 @@ def label(item, folders):
     return f"{item.get('name')!r:40.40} {login.get('username') or '':30.30} {site:35.35} [{folders.get(item.get('folderId'), 'No folder')}]"
 
 
+def day(ts):
+    return (ts or "")[:10] or "-"
+
+
+def resolve(conflicts, accounts, folders):
+    """One conflict at a time: show each distinct password's item(s), suggest the current one, ask."""
+    trashed = 0
+    for n, key in enumerate(sorted(conflicts), 1):
+        items = accounts[key]
+        pw = lambda i: (i.get("login") or {}).get("password") or ""
+        history = {h.get("password") for i in items for h in (i.get("passwordHistory") or [])}
+        variants = defaultdict(list)
+        for i in items:
+            variants[pw(i)].append(i)
+        options = list(variants.items())
+
+        def evidence(p, its):
+            newest = max(its, key=lambda i: i.get("revisionDate") or "")
+            changed = max(((i.get("login") or {}).get("passwordRevisionDate") or "") for i in its)
+            return dict(outdated=p in history, changed=changed, edited=newest.get("revisionDate") or "")
+
+        ev = [evidence(p, its) for p, its in options]
+        ranked = sorted(range(len(options)), key=lambda k: (not ev[k]["outdated"], ev[k]["changed"], ev[k]["edited"]), reverse=True)
+        suggest = ranked[0] + 1
+        print(f"\n[{n}/{len(conflicts)}] {key[0]}  ·  {key[1]}")
+        for k, (p, its) in enumerate(options, 1):
+            e = ev[k - 1]
+            where = "; ".join(f"{i.get('name')!r} in {folders.get(i.get('folderId'), 'No folder')}" for i in its)
+            notes = []
+            if e["outdated"]:
+                notes.append("OUTDATED: in another item's password history")
+            if any((i.get("login") or {}).get("totp") for i in its):
+                notes.append("has 2FA code")
+            if any(i.get("notes") for i in its):
+                notes.append("has notes")
+            print(f"  {k}) {len(p):>2} chars  created {day(min(i.get('creationDate') or '' for i in its))}"
+                  f"  edited {day(e['edited'])}  pw changed {day(e['changed'])}"
+                  f"{'  * suggested' if k == suggest else ''}")
+            print(f"     {where}{'  — ' + ', '.join(notes) if notes else ''}")
+        ans = input(f"  Keep which? [{suggest}]  (number, s = skip, q = quit) ").strip().lower() or str(suggest)
+        if ans == "q":
+            break
+        if ans == "s" or not ans.isdigit() or not 1 <= int(ans) <= len(options):
+            print("  skipped")
+            continue
+        for k, (p, its) in enumerate(options, 1):
+            if k != int(ans):
+                for i in its:
+                    bw("delete", "item", i["id"])
+                    trashed += 1
+        print(f"  kept {ans}")
+    bw("sync")
+    print(f"\nTrashed {trashed} item(s). Restore from Bitwarden → Trash within 30 days if needed.")
+
+
 def main():
     if not os.environ.get("BW_SESSION"):
         sys.exit('Unlock first: export BW_SESSION="$(bw unlock --raw)"')
@@ -79,7 +137,7 @@ def main():
     folders = {f["id"]: f["name"] for f in json.loads(bw("list", "folders")) if f.get("id")}
     logins = [i for i in items if i.get("type") == 1]
 
-    groups, by_account = defaultdict(list), defaultdict(set)
+    groups, by_account, accounts = defaultdict(list), defaultdict(set), defaultdict(list)
     for i in logins:
         login = i.get("login") or {}
         uris = [host(u.get("uri")) for u in login.get("uris") or []]
@@ -87,6 +145,7 @@ def main():
         user = (login.get("username") or "").strip().lower()
         groups[(site, user, login.get("password") or "")].append(i)
         by_account[(site, user)].add(login.get("password") or "")
+        accounts[(site, user)].append(i)
 
     to_trash, review = [], []
     for members in groups.values():
@@ -98,6 +157,10 @@ def main():
             (review if adds_something(dup, keep) else to_trash).append((dup, keep))
 
     conflicts = [k for k, pw in by_account.items() if len(pw) > 1 and k[1]]
+    if RESOLVE:
+        print(f"{len(conflicts)} logins with more than one password. The current one is whichever the site accepts;")
+        print("if unsure, log in first (or answer s to skip).")
+        return resolve(conflicts, accounts, folders)
 
     print(f"{len(items)} items, {len(logins)} logins, {sum(1 for g in groups.values() if len(g) > 1)} duplicate groups\n")
     print(f"== Safe to trash: {len(to_trash)}")
@@ -112,7 +175,7 @@ def main():
         print(f"   {site:35.35} {user}")
 
     if not APPLY:
-        print("\nDry run. Run `bw-dedupe --apply` to move the safe ones to the trash.")
+        print("\nDry run. `bw-dedupe --apply` trashes the safe ones; `bw-dedupe --resolve` walks through the conflicts.")
         return
     for n, (dup, _) in enumerate(to_trash, 1):
         bw("delete", "item", dup["id"])  # soft delete: Bitwarden trash, 30 days
