@@ -13,7 +13,6 @@ tap "jesseduffield/lazygit"
 tap "jvm/tap"
 tap "mediosz/tap"
 tap "microsoft/mssql-release", "https://github.com/Microsoft/homebrew-mssql-release"
-tap "mongodb/brew"
 tap "nikitabobko/tap"
 tap "openclaw/tap"
 tap "schpet/tap"
@@ -62,6 +61,7 @@ cask "bitwarden"
 cask "localsend"
 
 # Productivity
+brew "caarlos0/tap/timer", trusted: true
 cask "tevans2/tilde/tilde"
 cask "google-drive"
 cask "syncthing-app"
@@ -73,6 +73,7 @@ brew "webstonehq/tap/tuxedo", trusted: true
 brew "emeraldian"
 
 # Containers, cloud, network
+brew "hashicorp/tap/terraform", trusted: true
 cask "tunnelblick"
 cask "postman-agent"
 cask "orbstack"
@@ -97,6 +98,13 @@ brew "ddgr"
 brew "w3m"
 
 # Languages and dev tools
+brew "bash"  # newer bash; tmux plugins run /opt/homebrew/bin/bash
+brew "git-lfs"
+brew "dlvhdr/formulae/diffnav", trusted: true
+brew "jvm/tap/git-dash", trusted: true
+brew "schpet/tap/linear", trusted: true
+brew "microsoft/mssql-release/msodbcsql17", trusted: true
+brew "microsoft/mssql-release/mssql-tools", trusted: true
 cask "dbeaver-community"
 cask "r-app"
 brew "go"
@@ -159,6 +167,7 @@ cask "font-inconsolata"
 cask "font-libertinus-sans"
 
 # AI and audio
+cask "codex"
 cask "ollama-app"
 brew "whisper.cpp"
 brew "sentencepiece"
