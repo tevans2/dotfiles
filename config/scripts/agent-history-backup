@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Nightly agent-history backup (launchd: home/darwin.nix). Pushes to thinker:/srv/agent-history/mac,
+# which accepts writes only and refuses deletes (homelab: modules/nixos/agent-history.nix).
+#
+#   cass/       cass's archive: database + raw mirror of every session (Claude Code/Claudian, Codex, Pi, OMP)
+#   claudian/   Claudian's own records (titles, typed inputs, subagent summaries, orphaned conversations)
+#   claude/     prompt log (history.jsonl), per-project memory, setup (settings, CLAUDE.md, skills, …)
+#   last-run    timestamp; thinker alerts if it's older than 2 days
+#
+# Run by hand any time: agent-history-backup
+set -uo pipefail
+export PATH="$HOME/.nix-profile/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+DEST="backup-mac@thinker::mac"
+SSH="ssh -i $HOME/.ssh/agent-history -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20"
+CASS="$HOME/.local/share/coding-agent-search"
+STAGE="$HOME/.cache/agent-history"
+log() { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
+push() { rsync -a --mkpath -e "$SSH" "$@"; }   # never --delete (the server refuses it anyway)
+fail=0
+
+log "start"
+nc -z -G 10 thinker 22 2>/dev/null || { log "thinker not reachable (Tailscale off?); skipping, retried next run"; exit 0; }
+
+# 1. cass: bring the archive up to date, then copy it (database right after indexing, while quiet)
+if command -v cass >/dev/null; then
+  cass index >/dev/null 2>&1 || log "cass index exited $? (copying what's there)"
+  push --exclude 'index/' --exclude '*.lock' --exclude '*.lock.*' --exclude '*.log*' --exclude 'doctor/' \
+    "$CASS/" "$DEST/cass/" || { log "cass copy failed"; fail=1; }
+  [ -d "$HOME/Library/Application Support/coding-agent-search" ] &&
+    push "$HOME/Library/Application Support/coding-agent-search/" "$DEST/cass-app-support/"
+else
+  log "cass not installed: copying raw transcripts instead"
+  push "$HOME/.claude/projects/" "$DEST/raw/claude-projects/" || fail=1
+  [ -d "$HOME/.codex/sessions" ] && { push "$HOME/.codex/sessions/" "$DEST/raw/codex-sessions/" || fail=1; }
+fi
+
+# 2. Claudian's own records
+push "$HOME/docs/life-notes/.claudian/sessions/" "$DEST/claudian/sessions/" || { log "claudian copy failed"; fail=1; }
+
+# 3. Claude: prompt log, per-project memory, setup
+push "$HOME/.claude/history.jsonl" "$DEST/claude/" || fail=1
+push --include='*/' --include='memory/***' --exclude='*' --prune-empty-dirs \
+  "$HOME/.claude/projects/" "$DEST/claude/memory/" || fail=1
+for p in settings.json CLAUDE.md keybindings.json skills commands agents hooks; do
+  [ -e "$HOME/.claude/$p" ] && { push "$HOME/.claude/$p" "$DEST/claude/setup/" || fail=1; }
+done
+
+# 4. Done: the thinker checks this timestamp
+if [ "$fail" -eq 0 ]; then
+  mkdir -p "$STAGE" && date '+%F %T %z' > "$STAGE/last-run" && push "$STAGE/last-run" "$DEST/" && log "done"
+else
+  log "finished with errors (last-run not updated, so thinker will alert if this persists)"
+  exit 1
+fi

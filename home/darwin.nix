@@ -19,7 +19,22 @@ in
   home.packages = with pkgs; [
     bitwarden-cli # `bw`: vault from the terminal; deliberately not on servers
     rhubarb # lip-sync data from audio, for Blender (see above)
+    rsync # modern rsync (macOS ships openrsync); used by agent-history-backup
   ];
+
+  # Nightly agent-history backup to thinker (config/scripts/agent-history-backup; receiver in the
+  # homelab repo, modules/nixos/agent-history.nix). launchd runs a missed run when the Mac wakes.
+  launchd.agents.agent-history-backup = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${config.home.homeDirectory}/.config/scripts/agent-history-backup" ];
+      StartCalendarInterval = [ { Hour = 2; Minute = 30; } ];
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/agent-history-backup.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/agent-history-backup.log";
+      ProcessType = "Background";
+      LowPriorityIO = true;
+    };
+  };
 
   xdg.configFile = {
     "aerospace".source = link "aerospace";
