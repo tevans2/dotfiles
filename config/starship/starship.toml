@@ -4,7 +4,7 @@ palette = "dracula"
 add_newline = true
 
 format = """
-[╭─ ](bold purple)$os$directory$git_branch$git_status$python$nodejs$rust$golang$docker_context
+[╭─ ](bold purple)$os$hostname$directory$git_branch$git_status$python$nodejs$rust$golang$docker_context
 [╰─](bold purple)$character"""
 
 right_format = "$cmd_duration $time"
@@ -33,6 +33,14 @@ format = "[$symbol](bold comment)"
 
 [os.symbols]
 Macos = " "
+NixOS = " "
+
+# Over SSH only: the machine's name as a badge in its colour, so a server prompt never looks like the Mac's.
+# thinker = bronze (the same colour as its greeting, tmux bar and terminal tint).
+[hostname]
+ssh_only = true
+style = "bold #d7875f"
+format = "[󰒋 $hostname]($style) "
 
 [directory]
 style = "bold cyan"
