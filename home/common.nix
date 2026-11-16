@@ -20,6 +20,7 @@ in
   xdg.configFile = {
     "atuin".source = link "atuin";
     "gh-dash".source = link "gh-dash";
+    "herdr/config.toml".source = link "herdr/config.toml"; # just the file: herdr keeps sockets and logs beside it
     "lazygit".source = link "lazygit";
     "nvim".source = link "nvim";
     "scripts".source = link "scripts";

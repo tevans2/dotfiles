@@ -22,6 +22,18 @@ previous_tab = ["prefix+p", "ctrl+shift+tab"]
 move_tab_previous = "prefix+<"
 move_tab_next = "prefix+>"
 
+# Ctrl+J / Ctrl+K: next / previous workspace; add Shift for the next / previous agent
+next_workspace = "ctrl+j"
+previous_workspace = "ctrl+k"
+next_agent = "ctrl+shift+j"
+previous_agent = "ctrl+shift+k"
+
+# like Vim's ctrl+^ / tmux's prefix+;: jump back to the pane you were last in (press again to return)
+last_pane = "prefix+o"
+
+# jump to the agent behind the latest notification (herdr's default is prefix+o, taken by last_pane above)
+open_notification_target = "prefix+;"
+
 settings = "prefix+comma"
 
 # s: the agent/terminal picker (g is lazygit, below); e: the workspace picker
@@ -62,3 +74,9 @@ command = "lazygit"
 description = "lazygit"
 width = "90%"
 height = "90%"
+
+[ui]
+status_indicators = "symbols"
+
+[ui.toast]
+delivery = "herdr"
