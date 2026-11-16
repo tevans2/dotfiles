@@ -18,7 +18,7 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 # Better defaults
-alias cat='bat --style=plain'
+(( $+commands[bat] )) && alias cat='bat --style=plain'
 alias find='fd'
 
 
